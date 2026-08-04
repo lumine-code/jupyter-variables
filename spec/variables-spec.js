@@ -188,7 +188,7 @@ describe("variables session", () => {
 
   it("hands a name to jupyter-explorer when it is", () => {
     const explored = [];
-    session.setDataExplorer({ explore: (kernel, name) => explored.push(name) });
+    session.setExplorer({ explore: (kernel, name) => explored.push(name) });
     session.setProvider(fakeProvider(fakeKernel()));
 
     session.explore(session.kernel, "df");

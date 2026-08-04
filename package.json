@@ -45,7 +45,7 @@
     },
     "jupyter.explorer": {
       "versions": {
-        "^1.0.0": "consumeDataExplorer"
+        "^1.0.0": "consumeJupyterExplorer"
       }
     },
     "jupyter.output": {
