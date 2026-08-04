@@ -92,7 +92,13 @@ class FilterEditor {
 
     this.disposables = new CompositeDisposable(
       registry,
-      this.editor.onDidChange(() => this.props.onChange(this.editor.getText())),
+      this.editor.onDidChange(() => {
+        // Programmatic setText in update() must not echo back into the store:
+        // the emit would re-enter the parent's patch that is applying the very
+        // change being echoed.
+        if (this._settingText) return;
+        this.props.onChange(this.editor.getText());
+      }),
       atom.commands.add(this.editor.element, {
         "core:confirm": () => this.props.onChange(this.editor.getText()),
         "core:cancel": () => {
@@ -110,7 +116,12 @@ class FilterEditor {
   update(props) {
     this.props = props;
     if (this.editor && this.editor.getText() !== props.value) {
-      this.editor.setText(props.value || "");
+      this._settingText = true;
+      try {
+        this.editor.setText(props.value || "");
+      } finally {
+        this._settingText = false;
+      }
     }
     return etch.update(this);
   }
