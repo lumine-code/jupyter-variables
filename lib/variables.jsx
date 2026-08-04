@@ -1,6 +1,6 @@
 const etch = require("@lumine-code/etch");
 const { CompositeDisposable } = require("atom");
-const { ansiNodes } = require("./ansi-utils");
+const outputRenderer = require("./output-renderer");
 
 /**
  * Sanitize HTML by removing script tags for security.
@@ -9,7 +9,25 @@ const { ansiNodes } = require("./ansi-utils");
  */
 function sanitizeHTML(html) {
   if (!html || typeof html !== "string") return "";
+  // jupyter-repl's sanitizer also strips inline handlers; the local regex is
+  // the without-the-hub fallback.
+  const service = outputRenderer.get();
+  if (service) {
+    return service.sanitizeHtml(html);
+  }
   return html.replace(/<script[\s\S]*?<\/script>/gi, "");
+}
+
+// Coloured spans through jupyter-repl's ANSI renderer; plain text without it.
+function ansiNodes(text) {
+  const service = outputRenderer.get();
+  if (service) {
+    return service.ansiNodes(text);
+  }
+  // Strip the colour escapes rather than show them. Built at runtime because
+  // a control character in a regex literal is a lint error.
+  const escapes = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g");
+  return String(text ?? "").replace(escapes, "");
 }
 
 const IMAGE_STYLE = { maxWidth: "200px", maxHeight: "100px" };

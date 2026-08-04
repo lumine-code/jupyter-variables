@@ -50,6 +50,7 @@ Paste this into your `styles.less` to fit more names on screen:
 
 - **jupyter.kernel** (`^1.0.0`): consumed to follow the active kernel and read its namespace.
 - **jupyter.explorer** (`^1.0.0`): consumed to open a name in the Data Explorer.
+- **jupyter.output** (`^1.0.0`): consumed to colour and sanitize values with jupyter-repl's renderers; plain text without it.
 
 ## Contributing
 

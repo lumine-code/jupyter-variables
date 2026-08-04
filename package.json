@@ -47,11 +47,15 @@
       "versions": {
         "^1.0.0": "consumeDataExplorer"
       }
+    },
+    "jupyter.output": {
+      "versions": {
+        "^1.0.0": "consumeJupyterOutput"
+      }
     }
   },
   "dependencies": {
-    "@lumine-code/etch": "https://github.com/lumine-code/etch.git#5801d1e3dd5078db7b575d55e72c6e85bd0dcf53",
-    "anser": "^2.3.5"
+    "@lumine-code/etch": "https://github.com/lumine-code/etch.git#5801d1e3dd5078db7b575d55e72c6e85bd0dcf53"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
