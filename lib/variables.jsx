@@ -183,7 +183,7 @@ class Variables {
     this.variableStore?.toggleAutoRefresh();
   };
 
-  // The Data Explorer is another package; hand it the name through the service
+  // jupyter-explorer is another package; hand it the name through the service
   // it provides. With that package absent there is simply nothing to jump to.
   handleExplore = (name) => {
     const kernel = this.store.kernel;
@@ -314,7 +314,7 @@ class Variables {
                     <a
                       className="variable-name-link"
                       onClick={() => this.handleExplore(variable.name)}
-                      title="Open in Data Explorer"
+                      title="Open in jupyter-explorer"
                     >
                       {variable.name}
                     </a>

@@ -2,7 +2,7 @@
 
 Browse and edit a Jupyter kernel's namespace in a table.
 
-Everything the kernel is holding, with its type and the best representation it can give — a dataframe's shape, an image's thumbnail, a Markdown `_repr_`. Names filter as you type, values can be edited in place, and any of them opens in the Data Explorer.
+Everything the kernel is holding, with its type and the best representation it can give — a dataframe's shape, an image's thumbnail, a Markdown `_repr_`. Names filter as you type, values can be edited in place, and any of them opens in jupyter-explorer.
 
 ## Features
 
@@ -11,7 +11,7 @@ Everything the kernel is holding, with its type and the best representation it c
 - **Edit in place**: double-click a value, type a new one, and it is assigned in the kernel.
 - **Filter by name**: a filter field narrows the table as you type.
 - **Auto-refresh**: follow the kernel and re-read the namespace every time it falls idle.
-- **Open in the grid**: a name opens in the Data Explorer, when that package is installed.
+- **Open in the grid**: a name opens in jupyter-explorer, when that package is installed.
 
 ## Installation
 
@@ -49,7 +49,7 @@ Paste this into your `styles.less` to fit more names on screen:
 ## Services
 
 - **jupyter.kernel** (`^1.0.0`): consumed to follow the active kernel and read its namespace.
-- **jupyter.explorer** (`^1.0.0`): consumed to open a name in the Data Explorer.
+- **jupyter.explorer** (`^1.0.0`): consumed to open a name in jupyter-explorer.
 - **jupyter.output** (`^1.0.0`): consumed to colour and sanitize values with jupyter-repl's renderers; plain text without it.
 
 ## Contributing

@@ -181,12 +181,12 @@ describe("variables session", () => {
     expect(kernel.idleCallbacks.length).toBe(0);
   });
 
-  it("says nothing to explore when the Data Explorer is not installed", () => {
+  it("says nothing to explore when jupyter-explorer is not installed", () => {
     session.setProvider(fakeProvider(fakeKernel()));
     expect(() => session.explore(session.kernel, "df")).not.toThrow();
   });
 
-  it("hands a name to the Data Explorer when it is", () => {
+  it("hands a name to jupyter-explorer when it is", () => {
     const explored = [];
     session.setDataExplorer({ explore: (kernel, name) => explored.push(name) });
     session.setProvider(fakeProvider(fakeKernel()));
