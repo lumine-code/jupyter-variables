@@ -1,0 +1,63 @@
+{
+  "name": "jupyter-variables",
+  "author": "lumine-code",
+  "description": "Browse and edit a Jupyter kernel's namespace in a table.",
+  "repository": "https://github.com/lumine-code/jupyter-variables",
+  "bugs": {
+    "url": "https://github.com/lumine-code/jupyter-variables/issues"
+  },
+  "homepage": "https://github.com/lumine-code/jupyter-variables#readme",
+  "keywords": [
+    "namespace",
+    "workspace",
+    "globals",
+    "inspect",
+    "pandas",
+    "numpy",
+    "python"
+  ],
+  "version": "1.0.0",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.100.0 <2.0.0"
+  },
+  "backgroundTips": [
+    "You can browse everything the kernel has in memory with {{ 'jupyter-variables:toggle' | keystroke }}"
+  ],
+  "main": "./lib/main",
+  "activationCommands": {
+    "atom-workspace": [
+      "jupyter-variables:toggle",
+      "jupyter-variables:refresh"
+    ]
+  },
+  "scripts": {
+    "test": "lumine --test spec",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "consumedServices": {
+    "jupyter.kernel": {
+      "versions": {
+        "^1.0.0": "consumeJupyterKernel"
+      }
+    },
+    "jupyter.explorer": {
+      "versions": {
+        "^1.0.0": "consumeDataExplorer"
+      }
+    }
+  },
+  "dependencies": {
+    "@lumine-code/etch": "https://github.com/lumine-code/etch.git#5801d1e3dd5078db7b575d55e72c6e85bd0dcf53",
+    "anser": "^2.3.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.6"
+  }
+}

@@ -1,0 +1,102 @@
+/*
+ * The panel used to be nested inside `.jupyter-repl`; it is rooted on its own
+ * pane element now, and code / pre inherit what jupyter-repl used to set.
+ */
+.jupyter-variables .variables-panel {
+  height: 100%;
+  display: block;
+  overflow: hidden;
+
+  .variables-controls {
+    flex: 0 0 auto;
+
+    .filter-container {
+      .filter-editor,
+      atom-text-editor {
+        width: 100%;
+      }
+
+      atom-text-editor {
+        font-size: var(--font-size);
+      }
+    }
+
+    .btn-group {
+      display: flex;
+      width: 100%;
+      margin-top: 5px;
+      margin-bottom: 8px;
+
+      .btn {
+        width: 100%;
+      }
+
+      .input-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+
+  .variable-wrapper {
+    overflow-y: auto;
+    overflow-x: hidden;
+    cursor: default;
+    height: calc(100% - 80px); /* Adjust for controls height */
+
+    .variable-table {
+      width: 100%;
+
+      > thead {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background-color: var(--background-color-highlight);
+      }
+
+      border: unset;
+
+      th,
+      td {
+        padding: 0.3em 0.5em;
+        border: 1px solid var(--base-border-color);
+        border-top: 1px;
+
+        p {
+          margin-bottom: unset;
+        }
+      }
+
+      th:nth-child(1),
+      th:nth-child(2) {
+        white-space: nowrap;
+      }
+
+      .variable-name {
+        white-space: nowrap;
+      }
+
+      .variable-type {
+        font-style: italic;
+        color: var(--text-color-subtle);
+      }
+    }
+  }
+}
+
+.jupyter-variables .variable-name-link {
+  cursor: pointer;
+  color: var(--text-color-info);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.jupyter-variables code,
+.jupyter-variables pre {
+  font-family: var(--editor-font-family);
+  white-space: pre-wrap;
+  word-break: normal;
+}

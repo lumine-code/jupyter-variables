@@ -1,0 +1,16 @@
+{
+  "menu": [
+    {
+      "label": "Packages",
+      "submenu": [
+        {
+          "label": "Jupyter Variables",
+          "submenu": [
+            { "label": "Toggle Variables", "command": "jupyter-variables:toggle" },
+            { "label": "Refresh", "command": "jupyter-variables:refresh" }
+          ]
+        }
+      ]
+    }
+  ]
+}
