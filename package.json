@@ -25,6 +25,13 @@
     "You can browse everything the kernel has in memory with {{ 'jupyter-variables:toggle' | keystroke }}"
   ],
   "main": "./lib/main",
+  "files": [
+    "keymaps",
+    "lib",
+    "menus",
+    "spec",
+    "styles"
+  ],
   "activationCommands": {
     "atom-workspace": [
       "jupyter-variables:toggle",
