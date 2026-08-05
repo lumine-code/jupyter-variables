@@ -43,9 +43,9 @@ module.exports = [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none" },
       ],
-      // Lumine compiles `.jsx` with `etch.dom` as the factory, so a tag is a
-      // use of `etch` rather than of `React`.
-      "jsx/jsx-uses": ["error", { pragma: "etch" }],
+      // Lumine compiles `.jsx` with `etch.dom` as the factory, which is this
+      // rule's default pragma.
+      "jsx/jsx-uses": "error",
     },
   },
   {
