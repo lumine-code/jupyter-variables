@@ -43,8 +43,10 @@ module.exports = [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none" },
       ],
-      // Lumine compiles `.jsx` with `etch.dom` as the factory, which is this
-      // rule's default pragma.
+      // Each file names its own JSX factory in a `/** @jsx ... */` pragma:
+      // `require-pragma` insists on it, and `jsx-uses` reads it from there
+      // rather than from a default that lives in another repository.
+      "jsx/require-pragma": "error",
       "jsx/jsx-uses": "error",
     },
   },

@@ -1,3 +1,4 @@
+/** @jsx etch.dom */
 const etch = require("@lumine-code/etch");
 const { CompositeDisposable } = require("atom");
 const outputRenderer = require("./output-renderer");
