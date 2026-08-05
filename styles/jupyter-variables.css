@@ -4,8 +4,11 @@
  */
 .jupyter-variables .variables-panel {
   height: 100%;
-  display: block;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  padding: 8px;
+  box-sizing: border-box;
 
   .variables-controls {
     flex: 0 0 auto;
@@ -40,10 +43,11 @@
   }
 
   .variable-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     cursor: default;
-    height: calc(100% - 80px); /* Adjust for controls height */
 
     .variable-table {
       width: 100%;
