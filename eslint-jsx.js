@@ -8,8 +8,11 @@
  * still caps its peer range at eslint 9, so the behaviour is reimplemented here
  * rather than pinning the whole toolchain back a major version.
  *
- * The pragma here is `etch`, passed in by the config: a tag compiles to a call
- * on `etch.dom`, which is the only thing keeping that require used.
+ * `pragma` is required rather than defaulted: a tag compiles to a call on that
+ * identifier -- `etch.dom` for an etch component, `React.createElement` for a
+ * React one -- which is usually the only thing keeping its require used. Naming
+ * it at the call site is what lets this file stay identical in every package
+ * that carries it.
  */
 
 // `<Foo />` references `Foo`; `<a.b.c />` references `a`; `<div />` is an
@@ -24,13 +27,26 @@ const jsxUses = {
   meta: {
     type: "problem",
     docs: { description: "Count JSX tags as references to the identifiers they name." },
-    schema: [{ type: "object", properties: { pragma: { type: "string" } } }],
+    // Spelled as a whole-array schema rather than the positional shorthand,
+    // which has no way to say that an option must be present at all. Omitting
+    // the pragma is then a config error, not a rule that silently marks nothing.
+    schema: {
+      type: "array",
+      items: [
+        {
+          type: "object",
+          properties: { pragma: { type: "string" } },
+          required: ["pragma"],
+          additionalProperties: false,
+        },
+      ],
+      minItems: 1,
+      maxItems: 1,
+    },
   },
   create(context) {
     const { sourceCode } = context;
-    // Any JSX in the file compiles down to a use of the factory's root
-    // identifier, which the config supplies.
-    const pragma = (context.options[0] && context.options[0].pragma) || "etch";
+    const { pragma } = context.options[0];
 
     function markPragma(node) {
       sourceCode.markVariableAsUsed(pragma, node);

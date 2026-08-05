@@ -43,19 +43,15 @@ module.exports = [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none" },
       ],
-      "jsx/jsx-uses": "error",
+      // Lumine compiles `.jsx` with `etch.dom` as the factory, so a tag is a
+      // use of `etch` rather than of `React`.
+      "jsx/jsx-uses": ["error", { pragma: "etch" }],
     },
   },
   {
     // This config and its helper are dev tooling, loaded by eslint as CommonJS.
     files: ["eslint.config.js", "eslint-jsx.js", "prettier.config.js"],
     languageOptions: { sourceType: "commonjs" },
-  },
-  {
-    // Etch components: Lumine compiles `.jsx` with `etch.dom` as the factory,
-    // so a tag in one of these files is a use of `etch`, not of `React`.
-    files: ["**/*.jsx"],
-    rules: { "jsx/jsx-uses": ["error", { pragma: "etch" }] },
   },
   {
     // Specs run in the Lumine jasmine runner.
