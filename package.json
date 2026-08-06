@@ -62,7 +62,7 @@
     }
   },
   "dependencies": {
-    "@lumine-code/etch": "github:lumine-code/etch#ba07febd6dc1df9b0917f9579da85fbd96a16a75"
+    "@lumine-code/etch": "github:lumine-code/etch#f42254f4cae46ea7c8147038bf99240e15faf6e2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
