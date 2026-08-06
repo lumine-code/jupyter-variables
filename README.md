@@ -36,9 +36,9 @@ Reading the namespace never calls a `_repr_` method on a large value: those mate
 
 ## Customization
 
-Paste this into your `styles.less` to fit more names on screen:
+Paste this into your `styles.css` to fit more names on screen:
 
-```less
+```css
 .jupyter-variables {
   .variable-table td {
     padding: 0.1em 0.3em;
