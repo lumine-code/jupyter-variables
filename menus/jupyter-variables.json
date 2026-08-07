@@ -7,6 +7,7 @@
           "label": "Jupyter Variables",
           "submenu": [
             { "label": "Toggle Variables", "command": "jupyter-variables:toggle" },
+            { "label": "Toggle Focus", "command": "jupyter-variables:toggle-focus" },
             { "label": "Refresh", "command": "jupyter-variables:refresh" }
           ]
         }

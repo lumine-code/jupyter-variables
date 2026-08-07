@@ -22,7 +22,7 @@
     "lumine": "^1.0.0"
   },
   "backgroundTips": [
-    "You can browse everything the kernel has in memory with {{ 'jupyter-variables:toggle' | keystroke }}"
+    "You can browse everything the kernel has in memory with {{ 'jupyter-variables:toggle-focus' | keystroke }}"
   ],
   "main": "./lib/main",
   "files": [
@@ -35,6 +35,7 @@
   "activationCommands": {
     "atom-workspace": [
       "jupyter-variables:toggle",
+      "jupyter-variables:toggle-focus",
       "jupyter-variables:refresh"
     ]
   },
