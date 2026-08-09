@@ -46,7 +46,7 @@ jobs:
 
   integration:
     # Run the Jasmine spec suite inside a real Lumine build. The specs use the
-    # editor runtime (atom config/notifications, the watchFile path-watcher), so
+    # editor runtime (lumine config/notifications, the watchFile path-watcher), so
     # this is the single place they run in CI.
     name: Lumine integration specs
     runs-on: ubuntu-latest

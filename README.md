@@ -21,7 +21,7 @@ It reads its kernels from [`jupyter-repl`](https://github.com/lumine-code/jupyte
 
 ## Commands
 
-Commands available in `atom-workspace`:
+Commands available in `lumine-workspace`:
 
 - `jupyter-variables:toggle`: open the panel, or close it when it is open,
 - `jupyter-variables:toggle-focus`: focus the panel, or return focus to the editor when it already has it,

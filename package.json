@@ -33,7 +33,7 @@
     "styles"
   ],
   "activationCommands": {
-    "atom-workspace": [
+    "lumine-workspace": [
       "jupyter-variables:toggle",
       "jupyter-variables:toggle-focus",
       "jupyter-variables:refresh"

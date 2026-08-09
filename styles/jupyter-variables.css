@@ -15,11 +15,11 @@
 
     .filter-container {
       .filter-editor,
-      atom-text-editor {
+      lumine-text-editor {
         width: 100%;
       }
 
-      atom-text-editor {
+      lumine-text-editor {
         font-size: var(--font-size);
       }
     }

@@ -1,6 +1,6 @@
 /** @jsx etch.dom */
 const etch = require("@lumine-code/etch");
-const { CompositeDisposable } = require("atom");
+const { CompositeDisposable } = require("lumine");
 const outputRenderer = require("./output-renderer");
 
 /**
@@ -79,13 +79,13 @@ class FilterEditor {
     this.props = props;
     etch.initialize(this);
 
-    this.editor = atom.workspace.buildTextEditor({
+    this.editor = lumine.workspace.buildTextEditor({
       mini: true,
       placeholderText: "Filter by name...",
     });
     // Register with the text editor registry so it gets scopes / services,
     // matching the way editors are built elsewhere.
-    const registry = atom.textEditors.add(this.editor);
+    const registry = lumine.textEditors.add(this.editor);
     if (this.props.value) {
       this.editor.setText(this.props.value);
     }
@@ -100,7 +100,7 @@ class FilterEditor {
         if (this._settingText) return;
         this.props.onChange(this.editor.getText());
       }),
-      atom.commands.add(this.editor.element, {
+      lumine.commands.add(this.editor.element, {
         "core:confirm": () => this.props.onChange(this.editor.getText()),
         "core:cancel": () => {
           this.editor.setText("");

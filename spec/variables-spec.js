@@ -130,12 +130,12 @@ describe("variables store", () => {
 
   it("refuses to edit through a kernel that is not Python", () => {
     const kernel = fakeKernel("julia");
-    spyOn(atom.notifications, "addWarning");
+    spyOn(lumine.notifications, "addWarning");
 
     new VariablesStore(kernel).editVariable("total", "42");
 
     expect(kernel.executed).toEqual([]);
-    expect(atom.notifications.addWarning).toHaveBeenCalled();
+    expect(lumine.notifications.addWarning).toHaveBeenCalled();
   });
 });
 
@@ -245,7 +245,7 @@ describe("variables panel", () => {
     session.setProvider(fakeProvider(fakeKernel()));
     render();
 
-    expect(component.element.querySelector(".filter-editor atom-text-editor")).toBeTruthy();
+    expect(component.element.querySelector(".filter-editor lumine-text-editor")).toBeTruthy();
   });
 });
 
@@ -254,7 +254,7 @@ describe("variables pane teardown", () => {
   // service destroys the item directly rather than through `pane.destroyItem`.
   it("leaves no tab behind when destroyed directly", () => {
     const item = new VariablesPane(new VariablesSession());
-    const pane = atom.workspace.getCenter().getActivePane();
+    const pane = lumine.workspace.getCenter().getActivePane();
     pane.addItem(item);
 
     expect(pane.getItems()).toContain(item);

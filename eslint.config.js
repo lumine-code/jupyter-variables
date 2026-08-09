@@ -22,7 +22,7 @@ module.exports = [
       globals: {
         ...globals.browser,
         ...globals.node,
-        atom: "readonly",
+        lumine: "readonly",
       },
     },
     plugins: { jsx },
