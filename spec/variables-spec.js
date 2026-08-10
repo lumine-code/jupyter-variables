@@ -114,11 +114,29 @@ describe("variables store", () => {
     expect(kernel.idleCallbacks.length).toBe(1);
     expect(kernel.executed.length).toBe(1);
 
+    // Complete the first fetch, as a real kernel would.
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
     kernel.idleCallbacks[0]();
     expect(kernel.executed.length).toBe(2);
 
     store.toggleAutoRefresh();
     expect(kernel.idleCallbacks.length).toBe(0);
+  });
+
+  it("drops an idle tick that arrives while a fetch is outstanding", () => {
+    // The idle signal is kernel-wide, so a chatty client can tick faster than
+    // the namespace dump returns. Only one fetch may be in flight.
+    const kernel = fakeKernel();
+    const store = new VariablesStore(kernel);
+    store.toggleAutoRefresh();
+    expect(kernel.executed.length).toBe(1);
+
+    kernel.idleCallbacks[0]();
+    expect(kernel.executed.length).toBe(1);
+
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
+    kernel.idleCallbacks[0]();
+    expect(kernel.executed.length).toBe(2);
   });
 
   it("assigns an edited value in the kernel", () => {
