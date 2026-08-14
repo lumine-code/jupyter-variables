@@ -15,7 +15,7 @@ Everything the kernel is holding, with its type and the best representation it c
 
 ## Installation
 
-To install `jupyter-variables` search for _jupyter-variables_ in the Install pane of the Lumine settings or run `lumine --install lumine-code/jupyter-variables`.
+To install `jupyter-variables` search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/jupyter-variables`.
 
 It reads its kernels from [`jupyter-repl`](https://github.com/lumine-code/jupyter-repl), which needs to be installed too.
 
@@ -49,9 +49,9 @@ Paste this into your `styles.css` to fit more names on screen:
 
 ## Services
 
-- **jupyter.kernel** (`^1.0.0`): consumed to follow the active kernel and read its namespace.
-- **jupyter.explorer** (`^1.0.0`): consumed to open a name in jupyter-explorer.
-- **jupyter.output** (`^1.0.0`): consumed to colour and sanitize values with jupyter-repl's renderers; plain text without it.
+- `jupyter.kernel`: consumed to follow the active kernel and read its namespace.
+- `jupyter.explorer`: consumed to open a name in jupyter-explorer.
+- `jupyter.output`: consumed to colour and sanitize values with jupyter-repl's renderers; plain text without it.
 
 ## Contributing
 
