@@ -8,9 +8,9 @@ Everything the kernel is holding, with its type and the best representation it c
 
 - **The whole namespace**: every user-defined name, with its type and value.
 - **Rich values**: renders the Markdown, HTML or image representation a kernel offers, falling back to its text.
-- **Edit in place**: double-click a value, type a new one, and it is assigned in the kernel.
+- **Edit in place**: double-click a value, type a new one, and it is assigned in the kernel; leaving it untouched assigns nothing.
 - **Filter by name**: a filter field narrows the table as you type.
-- **Auto-refresh**: follow the kernel and re-read the namespace every time it falls idle.
+- **Auto-refresh**: follow the kernel and re-read the namespace every time it falls idle, paused while the panel is closed.
 - **Open in the grid**: a name opens in jupyter-explorer, when that package is installed.
 
 ## Installation
@@ -31,9 +31,11 @@ Commands available in `lumine-workspace`:
 
 Only Python kernels are supported; the panel says so rather than showing an empty table for anything else.
 
-Auto-refresh is off by default. It re-reads the namespace every time the kernel falls idle, which costs a round trip after every cell — worth it while you are working through a dataframe, wasteful during a long run.
+Auto-refresh is off by default, and the setting decides what each new kernel starts with. It re-reads the namespace every time the kernel falls idle, which costs a round trip after every cell — worth it while you are working through a dataframe, wasteful during a long run. Closing the panel pauses it: nothing is re-read while there is nothing on screen to read it, and reopening picks up where it left off.
 
-Reading the namespace never calls a `_repr_` method on a large value: those materialise the object, which can hang the kernel for no benefit. A dataframe over ten thousand cells, or a list over a thousand entries, shows a summary line instead.
+Reading the namespace never calls a `_repr_` method on a large value: those materialise the object, which can hang the kernel for no benefit. A dataframe over ten thousand cells, or a string or sized collection over a thousand entries, shows a summary line instead — subclasses included, so a `Counter` is measured like the dict it is. Image representations are read only for small values and only up to 256 KiB, so a figure is never re-encoded on every refresh.
+
+The walk leaves the namespace exactly as it found it: its own imports are local to it, and nothing it needs is added to or hidden from what you see.
 
 ## Customization
 
