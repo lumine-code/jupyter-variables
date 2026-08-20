@@ -10,13 +10,17 @@ const outputRenderer = require("./output-renderer");
  */
 function sanitizeHTML(html) {
   if (!html || typeof html !== "string") return "";
-  // jupyter-repl's sanitizer also strips inline handlers; the local regex is
-  // the without-the-hub fallback.
   const service = outputRenderer.get();
   if (service) {
     return service.sanitizeHtml(html);
   }
-  return html.replace(/<script[\s\S]*?<\/script>/gi, "");
+  // The without-the-hub fallback: the same strips jupyter-repl's sanitizer
+  // applies — script elements and inline handlers alike, so the two paths
+  // agree on what reaches innerHTML.
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, "")
+    .replace(/\s*on\w+\s*=\s*[^\s>]+/gi, "");
 }
 
 // Coloured spans through jupyter-repl's ANSI renderer; plain text without it.
@@ -38,7 +42,15 @@ function renderRepr(repr) {
   if (!repr) return null;
 
   if (repr.markdown) {
-    return <div className="repr-markdown">{repr.markdown}</div>;
+    // Rendered markdown through jupyter-repl's machinery; the raw source is
+    // all there is to show without it.
+    const service = outputRenderer.get();
+    const rendered = service?.renderRichMedia(
+      { "text/markdown": repr.markdown },
+      {},
+      service.pickRenderers(["text/markdown"]),
+    );
+    return <div className="repr-markdown">{rendered ?? repr.markdown}</div>;
   }
   if (repr.html) {
     return <div className="repr-html" innerHTML={sanitizeHTML(repr.html)} />;
@@ -147,6 +159,9 @@ class Variables {
 
     this.disposables = new CompositeDisposable(
       this.store.onDidChangeCurrentKernel(() => this.watchCurrentKernel()),
+      // jupyter-repl can activate after this panel is on screen and deactivate
+      // under it; the values re-render richer or plainer on both edges.
+      outputRenderer.onDidChange(() => etch.update(this)),
     );
 
     this.watchCurrentKernel();
@@ -176,7 +191,6 @@ class Variables {
   };
 
   handleRefresh = () => {
-    // Force refresh bypassing visibility check
     this.variableStore?.fetchVariables();
   };
 
@@ -196,6 +210,10 @@ class Variables {
   startEditing(variable) {
     const repr = variable.repr || {};
     this.editValue = repr.text || repr.pretty || "";
+    // What the field started with. A repr is rarely valid Python — a summary
+    // line never is — so committing it back unedited would only assign
+    // garbage; an edit is submitted only when the user actually changed it.
+    this.editOriginal = this.editValue;
     this.editingName = variable.name;
     etch.update(this);
   }
@@ -206,7 +224,7 @@ class Variables {
   }
 
   submitEdit() {
-    if (this.editingName && this.editValue !== "") {
+    if (this.editingName && this.editValue !== "" && this.editValue !== this.editOriginal) {
       this.handleEdit(this.editingName, this.editValue);
     }
     this.stopEditing();
@@ -258,7 +276,9 @@ class Variables {
   render() {
     const kernel = this.store.kernel;
 
-    if (!kernel) {
+    // A destroyed wrapper throws from every getter; `destroyed` is the one
+    // field that stays readable, and a kernel that is gone is no kernel.
+    if (!kernel || kernel.destroyed) {
       return this.renderMessage([<li>No kernel running</li>]);
     }
 
@@ -282,13 +302,17 @@ class Variables {
             <FilterEditor value={variableStore.filterText} onChange={this.handleFilterChange} />
           </div>
           <div className="btn-group">
-            <label className="input-label">
+            <label
+              className="input-label"
+              title="Re-read the namespace whenever the kernel falls idle"
+            >
               <input
                 className="input-checkbox"
                 type="checkbox"
                 checked={variableStore.autoRefresh}
                 onChange={this.handleToggleAutoRefresh}
               />
+              Auto
             </label>
             <button
               className="btn icon icon-repo-sync"

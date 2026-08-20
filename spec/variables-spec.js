@@ -14,6 +14,7 @@ function fakeKernel(language = "python") {
   return {
     displayName: "Python 3",
     language,
+    destroyed: false,
     executed: [],
     idleCallbacks: [],
     executeWatch(code, onResults) {
@@ -70,7 +71,7 @@ describe("variables store", () => {
     expect(store.variables).toEqual([]);
   });
 
-  it("reads the names out of the kernel's stdout", () => {
+  it("reads the names out of the kernel's stdout once the run completes", () => {
     const kernel = fakeKernel();
     const store = new VariablesStore(kernel);
     store.fetchVariables();
@@ -80,6 +81,25 @@ describe("variables store", () => {
       name: "stdout",
       text: JSON.stringify(variables("df", "total")),
     });
+    // Nothing is parsed until the kernel says it is done.
+    expect(store.variables).toEqual([]);
+
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
+
+    expect(store.variables.map((v) => v.name)).toEqual(["df", "total"]);
+  });
+
+  it("assembles stdout that arrives in chunks", () => {
+    // ipykernel flushes big payloads as several stream messages; parsing any
+    // one of them alone would throw the whole namespace away.
+    const kernel = fakeKernel();
+    const store = new VariablesStore(kernel);
+    store.fetchVariables();
+
+    const text = JSON.stringify(variables("df", "total"));
+    kernel.lastOnResults({ output_type: "stream", name: "stdout", text: text.slice(0, 10) });
+    kernel.lastOnResults({ output_type: "stream", name: "stdout", text: text.slice(10) });
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
 
     expect(store.variables.map((v) => v.name)).toEqual(["df", "total"]);
   });
@@ -91,8 +111,29 @@ describe("variables store", () => {
     store.fetchVariables();
 
     kernel.lastOnResults({ output_type: "stream", name: "stdout", text: "{ truncated" });
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
 
     expect(store.variables.map((v) => v.name)).toEqual(["df"]);
+  });
+
+  it("releases the latch when the kernel answers with an error", () => {
+    // What a restart or a dead process settles an outstanding fetch with;
+    // Refresh must work again afterwards rather than stay latched forever.
+    const kernel = fakeKernel();
+    const store = new VariablesStore(kernel);
+    store.fetchVariables();
+    expect(kernel.executed.length).toBe(1);
+
+    kernel.lastOnResults({
+      output_type: "error",
+      ename: "ExecutionAborted",
+      evalue: "Kernel restarted",
+      traceback: [],
+    });
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
+
+    store.fetchVariables();
+    expect(kernel.executed.length).toBe(2);
   });
 
   it("filters by name", () => {
@@ -189,6 +230,7 @@ describe("variables session", () => {
     const kernel = fakeKernel();
     const provider = fakeProvider(kernel);
     session.setProvider(provider);
+    session.setViewActive(true);
     session.storeFor().toggleAutoRefresh();
 
     expect(kernel.idleCallbacks.length).toBe(1);
@@ -197,6 +239,40 @@ describe("variables session", () => {
 
     expect(session.kernel).toBe(null);
     expect(kernel.idleCallbacks.length).toBe(0);
+  });
+
+  it("lets go of a replaced provider's subscriptions", () => {
+    let disposed = 0;
+    const provider = {
+      getActiveKernel: () => null,
+      onDidChangeKernel: () => ({ dispose: () => disposed++ }),
+      onDidRemoveKernel: () => ({ dispose: () => disposed++ }),
+    };
+    session.setProvider(provider);
+
+    session.setProvider(null);
+
+    expect(disposed).toBe(2);
+  });
+
+  it("pauses auto-refresh while no panel is open and resumes on reopen", () => {
+    const kernel = fakeKernel();
+    session.setProvider(fakeProvider(kernel));
+    session.setViewActive(true);
+    const store = session.storeFor();
+    store.toggleAutoRefresh();
+    expect(kernel.idleCallbacks.length).toBe(1);
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
+    const fetches = kernel.executed.length;
+
+    session.setViewActive(false);
+    expect(kernel.idleCallbacks.length).toBe(0);
+    expect(store.autoRefresh).toBe(true);
+
+    session.setViewActive(true);
+    expect(kernel.idleCallbacks.length).toBe(1);
+    // One fresh fetch, so the reopened panel is current rather than stale.
+    expect(kernel.executed.length).toBe(fetches + 1);
   });
 
   it("says nothing to explore when jupyter-explorer is not installed", () => {
@@ -264,6 +340,83 @@ describe("variables panel", () => {
     render();
 
     expect(component.element.querySelector(".filter-editor lumine-text-editor")).toBeTruthy();
+  });
+
+  it("assigns an edit only when the value actually changed", () => {
+    // A repr is rarely valid Python — a summary line never is — so blurring
+    // an untouched field must not execute `name = <repr>` in the kernel.
+    const kernel = fakeKernel();
+    session.setProvider(fakeProvider(kernel));
+    render();
+    const variable = { name: "total", type: "int", repr: { text: "42" } };
+    session.storeFor().setVariables([variable]);
+    flush(component);
+
+    component.startEditing(variable);
+    component.submitEdit();
+    expect(kernel.executed).toEqual([]);
+
+    component.startEditing(variable);
+    component.editValue = "43";
+    component.submitEdit();
+    expect(kernel.executed).toEqual(["total = 43"]);
+  });
+});
+
+describe("the namespace dump", () => {
+  // The Python side is what actually guards the kernel; exercise it against a
+  // real interpreter where one is available, and skip quietly where not.
+  const { execFileSync } = require("child_process");
+
+  function findPython() {
+    for (const candidate of ["python3", "python"]) {
+      try {
+        const version = execFileSync(candidate, ["--version"], {
+          encoding: "utf8",
+          timeout: 10000,
+        });
+        if (/Python 3/.test(version)) {
+          return candidate;
+        }
+      } catch {
+        // Not this one; try the next.
+      }
+    }
+    return null;
+  }
+
+  it("reads a namespace without disturbing it", () => {
+    const python = findPython();
+    if (!python) {
+      pending("no Python 3 interpreter on this machine");
+      return;
+    }
+
+    const harness = `
+import io, json, contextlib
+ns = {"__name__": "__main__", "__builtins__": __builtins__}
+exec("import math", ns)
+ns["big"] = list(range(5000))
+ns["small"] = 42
+code = ${JSON.stringify(VARIABLES_CODE)}
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    exec(code, ns)
+rows = json.loads(buf.getvalue())
+print(json.dumps({
+    "names": sorted(r["name"] for r in rows),
+    "big": next(r for r in rows if r["name"] == "big")["repr"]["text"],
+    "leaked": sorted(k for k in ns if k in ("json", "base64", "types", "StringIO")),
+}))
+`;
+    const output = execFileSync(python, ["-c", harness], { encoding: "utf8", timeout: 30000 });
+    const result = JSON.parse(output);
+
+    // `math` — a module — is skipped; the big list is summarised, not
+    // materialised; and the walk's own imports never reach the namespace.
+    expect(result.names).toEqual(["big", "small"]);
+    expect(result.big).toBe("list(length=5,000)");
+    expect(result.leaked).toEqual([]);
   });
 });
 

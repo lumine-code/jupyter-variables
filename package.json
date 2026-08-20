@@ -24,6 +24,14 @@
   "backgroundTips": [
     "You can browse everything the kernel has in memory with {{ 'jupyter-variables:toggle-focus' | keystroke }}"
   ],
+  "configSchema": {
+    "autoRefresh": {
+      "title": "Auto-Refresh by Default",
+      "description": "Start each kernel's table with auto-refresh on: re-read the namespace whenever the kernel falls idle. The panel's checkbox still toggles it per kernel.",
+      "type": "boolean",
+      "default": false
+    }
+  },
   "main": "./lib/main",
   "files": [
     "keymaps",

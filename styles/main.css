@@ -38,6 +38,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 0.4em;
+        padding: 0 0.6em;
+        white-space: nowrap;
       }
     }
   }
