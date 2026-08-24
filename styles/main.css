@@ -94,7 +94,7 @@
 
 .jupyter-variables .variable-name-link {
   cursor: pointer;
-  color: var(--text-color-info);
+  color: var(--accent-only-text-color);
 
   &:hover {
     text-decoration: underline;
