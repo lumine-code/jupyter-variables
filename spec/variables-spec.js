@@ -363,35 +363,32 @@ describe("variables panel", () => {
   });
 });
 
-describe("the namespace dump", () => {
-  // The Python side is what actually guards the kernel; exercise it against a
-  // real interpreter where one is available, and skip quietly where not.
-  const { execFileSync } = require("child_process");
+// The Python side is what actually guards the kernel; exercise it against a
+// real interpreter where one is available.
+const { execFileSync } = require("child_process");
 
-  function findPython() {
-    for (const candidate of ["python3", "python"]) {
-      try {
-        const version = execFileSync(candidate, ["--version"], {
-          encoding: "utf8",
-          timeout: 10000,
-        });
-        if (/Python 3/.test(version)) {
-          return candidate;
-        }
-      } catch {
-        // Not this one; try the next.
+function findPython() {
+  for (const candidate of ["python3", "python"]) {
+    try {
+      const version = execFileSync(candidate, ["--version"], {
+        encoding: "utf8",
+        timeout: 10000,
+      });
+      if (/Python 3/.test(version)) {
+        return candidate;
       }
+    } catch {
+      // Not this one; try the next.
     }
-    return null;
   }
+  return null;
+}
 
+const python = findPython();
+const namespaceSuite = python ? describe : () => {};
+
+namespaceSuite("the namespace dump", () => {
   it("reads a namespace without disturbing it", () => {
-    const python = findPython();
-    if (!python) {
-      pending("no Python 3 interpreter on this machine");
-      return;
-    }
-
     const harness = `
 import io, json, contextlib
 ns = {"__name__": "__main__", "__builtins__": __builtins__}
