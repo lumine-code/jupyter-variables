@@ -95,9 +95,8 @@ class FilterEditor {
       mini: true,
       placeholderText: "Filter by name...",
     });
-    // Register with the text editor registry so it gets scopes / services,
-    // matching the way editors are built elsewhere.
-    const registry = lumine.textEditors.add(this.editor);
+    // Expose the field to features that observe editor surfaces in package UI.
+    const registry = lumine.textEditors.add(this.editor, { role: "input" });
     if (this.props.value) {
       this.editor.setText(this.props.value);
     }
