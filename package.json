@@ -24,6 +24,9 @@
   "backgroundTips": [
     "You can browse everything the kernel has in memory with {{ 'jupyter-variables:toggle-focus' | keystroke }}"
   ],
+  "deserializers": {
+    "jupyter-variables/VariablesPane": "deserializeVariablesPane"
+  },
   "configSchema": {
     "autoRefresh": {
       "title": "Auto-Refresh by Default",
