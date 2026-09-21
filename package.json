@@ -43,13 +43,6 @@
     "spec",
     "styles"
   ],
-  "activationCommands": {
-    "lumine-workspace": [
-      "jupyter-variables:toggle",
-      "jupyter-variables:toggle-focus",
-      "jupyter-variables:refresh"
-    ]
-  },
   "scripts": {
     "test": "lumine --test spec",
     "lint": "eslint . --max-warnings 0",
