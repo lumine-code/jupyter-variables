@@ -21,9 +21,6 @@
   "engines": {
     "lumine": "^1.0.0"
   },
-  "backgroundTips": [
-    "You can browse everything the kernel has in memory with {{ 'jupyter-variables:toggle-focus' | keystroke }}"
-  ],
   "deserializers": {
     "jupyter-variables/VariablesPane": "deserializeVariablesPane"
   },
@@ -48,6 +45,13 @@
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
+  },
+  "providedServices": {
+    "background-tips.provider": {
+      "versions": {
+        "1.0.0": "provideBackgroundTips"
+      }
+    }
   },
   "consumedServices": {
     "jupyter.kernel": {
