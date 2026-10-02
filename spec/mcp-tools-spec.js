@@ -127,6 +127,25 @@ describe("cached variable MCP tools", () => {
     expect(tools.ListJupyterVariables.execute({ kernelId: "first" }).stale).toBe(null);
   });
 
+  it("reports a deferred edit refresh as stale without starting it from a cache read", () => {
+    session.setViewActive(true);
+    const store = session.storeFor(kernels[0]);
+    store.setVariables([{ name: "value", type: "int", repr: { text: "3" } }]);
+    store.autoRefresh = true;
+    kernels[0].executeWithCallback = (_code, callback) => {
+      callback({ stream: "status", data: "ok" });
+      callback({ output_type: "status", execution_state: "idle" });
+    };
+    store.editVariable("value", "4");
+    const result = tools.ListJupyterVariables.execute({ kernelId: "first" });
+
+    expect(result.stale).toBe(true);
+    expect(result.refreshing).toBe(true);
+    expect(result.variables[0].repr.text).toBe("3");
+    expect(kernels[0].executeWatch).not.toHaveBeenCalled();
+    expect(kernels[0].inspect).not.toHaveBeenCalled();
+  });
+
   it("paginates and bounds encoded response bytes, including escaped and Unicode text", () => {
     const store = session.storeFor(kernels[0]);
     store.setVariables(
