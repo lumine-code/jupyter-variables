@@ -12,6 +12,7 @@ Everything the kernel is holding, with its type and the best representation it c
 - **Filter by name**: a filter field narrows the table as you type.
 - **Auto-refresh**: follow the kernel and re-read the namespace every time it falls idle, paused while the panel is closed.
 - **Open in the grid**: a name opens in jupyter-explorer, when that package is installed.
+- **Cached MCP access**: assistants can read a specific kernel's last namespace snapshot without refreshing it or executing code.
 
 ## Installation
 
@@ -37,6 +38,14 @@ Reading the namespace never calls a `_repr_` method on a large value: those mate
 
 The walk leaves the namespace exactly as it found it: its own imports are local to it, and nothing it needs is added to or hidden from what you see.
 
+## MCP tools
+
+When `lumine-mcp` is connected, `ListJupyterVariables` lists the cached namespace and `GetJupyterVariable` reads a cached name. Both require an explicit `kernelId`, as returned by `ListJupyterKernels`; neither falls back to whichever editor is active. Reading never opens the panel, creates a store, evaluates a representation or sends a kernel request. A kernel whose namespace has not been refreshed reports `cache-unavailable` with an explanation.
+
+`ListJupyterVariables` accepts `offset`, `limit` and `nameContains` independently of the panel's own filter. Both tools accept `maxChars` for each representation, defaulting to 1000; each complete JSON response is bounded to 32 KiB. Text, pretty text, Markdown and HTML are returned as cached strings, with truncation markers. Image payloads are omitted and their available MIME types are listed instead. `nextOffset` continues a list limited by either pagination or the response budget.
+
+Snapshots include an ISO `cachedAt`, the observed kernel execution count/time and conservative `stale` state. A known later execution, an active refresh, a busy kernel or a failed refresh marks the cache stale. `stale: false` means no known execution since the snapshot; it does not assert that the kernel was read live. Missing execution metadata leaves staleness unknown (`null`). Provider removal or kernel removal discards the associated cache; package deactivation withdraws the tools.
+
 ## Customization
 
 Paste this into your `styles.css` to fit more names on screen:
@@ -54,6 +63,7 @@ Paste this into your `styles.css` to fit more names on screen:
 - `jupyter.kernel`: consumed to follow the active kernel and read its namespace.
 - `jupyter.explorer`: consumed to open a name in jupyter-explorer.
 - `jupyter.output`: consumed to colour and sanitize values with jupyter-repl's renderers; plain text without it.
+- `mcp.tools`: provides `ListJupyterVariables` and `GetJupyterVariable` as bounded, read-only cache queries.
 
 ## Contributing
 

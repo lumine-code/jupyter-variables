@@ -47,6 +47,11 @@
     "format:check": "prettier --check ."
   },
   "providedServices": {
+    "mcp.tools": {
+      "versions": {
+        "1.0.0": "provideMcpTools"
+      }
+    },
     "background-tips.provider": {
       "versions": {
         "1.0.0": "provideBackgroundTips"
