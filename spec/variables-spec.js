@@ -184,7 +184,7 @@ describe("variables store", () => {
     const kernel = fakeKernel();
     new VariablesStore(kernel).editVariable("total", "42");
 
-    expect(kernel.executed).toEqual(["total = 42"]);
+    expect(kernel.executed).toEqual(['globals()["total"] = 42']);
   });
 
   it("refuses to edit through a kernel that is not Python", () => {
@@ -359,7 +359,7 @@ describe("variables panel", () => {
     component.startEditing(variable);
     component.editValue = "43";
     component.submitEdit();
-    expect(kernel.executed).toEqual(["total = 43"]);
+    expect(kernel.executed).toEqual(['globals()["total"] = 43']);
   });
 });
 
@@ -388,6 +388,28 @@ const python = findPython();
 const namespaceSuite = python ? describe : () => {};
 
 namespaceSuite("the namespace dump", () => {
+  it("bounds custom rich representations before sending the namespace", () => {
+    const harness = `
+import io, json, contextlib
+class BigHTML:
+    def _repr_html_(self):
+        return "<div>" + "x" * 1000000 + "</div>"
+    def __repr__(self):
+        return "BigHTML(summary)"
+ns = {"__name__": "__main__", "__builtins__": __builtins__, "value": BigHTML()}
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    exec(${JSON.stringify(VARIABLES_CODE)}, ns)
+print(buf.getvalue())
+`;
+    const result = JSON.parse(
+      execFileSync(python, ["-c", harness], { encoding: "utf8", timeout: 30000 }),
+    );
+
+    expect(result[0].repr.html).toBeUndefined();
+    expect(result[0].repr.text).toBe("BigHTML(summary)");
+  });
+
   it("reads a namespace without disturbing it", () => {
     const harness = `
 import io, json, contextlib

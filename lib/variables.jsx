@@ -141,7 +141,7 @@ class FilterEditor {
   destroy() {
     this.disposables.dispose();
     this.editor?.destroy();
-    return etch.destroy(this);
+    return etch.destroySync(this);
   }
 }
 
@@ -149,6 +149,7 @@ class FilterEditor {
 class Variables {
   constructor({ store }) {
     this.store = store;
+    this.destroyed = false;
     // The name being edited, if any: only one cell is editable at a time.
     this.editingName = null;
     this.editValue = "";
@@ -274,6 +275,7 @@ class Variables {
 
   render() {
     const kernel = this.store.kernel;
+    if (this.destroyed) return <div className="sidebar variables-panel" />;
 
     // A destroyed wrapper throws from every getter; `destroyed` is the one
     // field that stays readable, and a kernel that is gone is no kernel.
@@ -360,8 +362,10 @@ class Variables {
 
   destroy() {
     this.variablesSubscription?.dispose();
+    if (this.destroyed) return;
+    this.destroyed = true;
     this.disposables.dispose();
-    return etch.destroy(this);
+    return etch.destroySync(this);
   }
 }
 
