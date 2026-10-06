@@ -20,7 +20,7 @@
       }
 
       lumine-text-editor {
-        font-size: var(--font-size);
+        font-size: var(--ui-font-size);
       }
     }
 
@@ -94,7 +94,7 @@
 
 .jupyter-variables .variable-name-link {
   cursor: pointer;
-  color: var(--accent-only-text-color);
+  color: var(--accent-link-color);
 
   &:hover {
     text-decoration: underline;
