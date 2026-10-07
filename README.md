@@ -65,6 +65,8 @@ Paste this into your `styles.css` to fit more names on screen:
 - `jupyter.output`: consumed to colour and sanitize values with jupyter-repl's renderers; plain text without it.
 - `mcp.tools`: provides `ListJupyterVariables` and `GetJupyterVariable` as bounded, read-only cache queries.
 
+- `background-tips.provider`: provided to teach the package's headline action in an empty workspace.
+
 ## Contributing
 
 Got ideas to make this package better, found a bug, or want to help add new features? Just drop your thoughts on GitHub. Any feedback is welcome!
