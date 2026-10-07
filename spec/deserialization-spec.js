@@ -1,9 +1,9 @@
 const { recordRequest, settle } = require("./request-fixture");
 const path = require("path");
 const manifest = require("../package.json");
-const main = require("../lib/main");
-const VariablesSession = require("../lib/variables-session");
-const VariablesPane = require("../lib/variables-pane");
+let main;
+let VariablesSession;
+let VariablesPane;
 const DESERIALIZER = "jupyter-variables/VariablesPane";
 function fakeKernel() {
   return {
@@ -43,6 +43,11 @@ function fakeProvider(kernel) {
 // services are registered.
 describe("restoring the Variables pane", () => {
   let loadedPackage = null;
+  beforeEach(() => {
+    main = require("../lib/main");
+    VariablesSession = require("../lib/variables-session");
+    VariablesPane = require("../lib/variables-pane");
+  });
   afterEach(async () => {
     if (loadedPackage && lumine.packages.isPackageActive(loadedPackage.name)) {
       await lumine.packages.deactivatePackage(loadedPackage.name);
@@ -80,6 +85,7 @@ describe("restoring the Variables pane", () => {
     await settle();
     loadedPackage = lumine.packages.loadPackage(path.resolve(__dirname, ".."));
     const restored = lumine.deserializers.deserialize(state);
+    main = loadedPackage.mainModule;
     expect(restored).toBeTruthy();
     expect(restored.serialize()).toEqual(state);
     expect(restored.session).toBe(main.getSession());

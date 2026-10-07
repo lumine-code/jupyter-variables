@@ -11,7 +11,6 @@ function kernel(id) {
     executionCount: 3,
     lastExecutionTime: "2026-10-02T10:00:00.000Z",
     request: jasmine.createSpy("request"),
-    inspect: jasmine.createSpy("inspect"),
     onDidBecomeIdle: jasmine.createSpy("idle subscription").and.callFake(() => new Disposable()),
     generation: 0,
     onDidChangeGeneration: () => ({
@@ -67,7 +66,6 @@ describe("cached variable MCP tools", () => {
     ).toBe("kernel-not-found");
     expect(session.stores.size).toBe(0);
     expect(kernels[1].request).not.toHaveBeenCalled();
-    expect(kernels[1].inspect).not.toHaveBeenCalled();
     expect(kernels[1].onDidBecomeIdle).not.toHaveBeenCalled();
     expect(tools.ListJupyterVariables.annotations.readOnlyHint).toBe(true);
   });
@@ -115,7 +113,6 @@ describe("cached variable MCP tools", () => {
       }).variables.length,
     ).toBe(1);
     expect(kernels[1].request).not.toHaveBeenCalled();
-    expect(kernels[1].inspect).not.toHaveBeenCalled();
   });
   it("distinguishes a missing cache from a successfully cached empty namespace", async () => {
     const store = session.storeFor(kernels[0]);
@@ -148,7 +145,6 @@ describe("cached variable MCP tools", () => {
     expect(result.status).toBe("unsupported-kernel");
     expect(result.reason).toContain("Python");
     expect(kernels[0].request).not.toHaveBeenCalled();
-    expect(kernels[0].inspect).not.toHaveBeenCalled();
   });
   it("marks known changes and failed refreshes stale and unknown baselines uncertain", async () => {
     const store = session.storeFor(kernels[0]);
@@ -216,7 +212,6 @@ describe("cached variable MCP tools", () => {
     expect(result.refreshing).toBe(true);
     expect(result.variables[0].repr.text).toBe("3");
     expect(kernels[0].request).not.toHaveBeenCalled();
-    expect(kernels[0].inspect).not.toHaveBeenCalled();
   });
   it("paginates and bounds encoded response bytes, including escaped and Unicode text", async () => {
     const store = session.storeFor(kernels[0]);
