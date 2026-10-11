@@ -430,9 +430,12 @@ describe("variables panel", () => {
 // real interpreter where one is available.
 const { execFileSync } = require("child_process");
 function findPython() {
+  // Live interpreter tests are explicitly enabled in disposable integration CI.
+  if (process.env.LUMINE_TEST_LIVE_PYTHON !== "true") return null;
   for (const candidate of ["python3", "python"]) {
     try {
       const version = execFileSync(candidate, ["--version"], {
+        windowsHide: true,
         encoding: "utf8",
         timeout: 10000,
       });
@@ -443,7 +446,7 @@ function findPython() {
       // Not this one; try the next.
     }
   }
-  return null;
+  throw new Error("Live Python integration was enabled, but Python 3 is unavailable.");
 }
 const python = findPython();
 const namespaceSuite = python ? describe : () => {};
@@ -464,6 +467,7 @@ print(buf.getvalue())
 `;
     const result = JSON.parse(
       execFileSync(python, ["-c", harness], {
+        windowsHide: true,
         encoding: "utf8",
         timeout: 30000,
       }),
@@ -490,6 +494,7 @@ print(json.dumps({
 }))
 `;
     const output = execFileSync(python, ["-c", harness], {
+      windowsHide: true,
       encoding: "utf8",
       timeout: 30000,
     });
