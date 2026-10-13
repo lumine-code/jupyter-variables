@@ -14,6 +14,8 @@ Everything the kernel is holding, with its type and the best representation it c
 - **Open in the grid**: a name opens in jupyter-explorer, when that package is installed.
 - **Cached MCP access**: assistants can read a specific kernel's last namespace snapshot without refreshing it or executing code.
 
+![Use jupyter-variables with the running Python kernel.](.github/demo.png)
+
 ## Installation
 
 To install `jupyter-variables` search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/jupyter-variables`.
