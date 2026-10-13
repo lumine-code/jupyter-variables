@@ -513,7 +513,7 @@ describe("variables pane teardown", () => {
   // service destroys the item directly rather than through `pane.destroyItem`.
   it("leaves no tab behind when destroyed directly", async () => {
     const item = new VariablesPane(new VariablesSession());
-    const pane = lumine.workspace.getCenter().getActivePane();
+    const pane = lumine.workspace.getRightDock().getActivePane();
     pane.addItem(item);
     await settle();
     expect(pane.getItems()).toContain(item);
