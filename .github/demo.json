@@ -2,9 +2,10 @@
   "title": "jupyter-variables",
   "description": "Use jupyter-variables with the running Python kernel.",
   "recordedOn": "2026-10-13",
-  "sourceRevision": "b2c6c053a59eacc708bcf931cd69e0200df9f3c9",
+  "sourceRevision": "68e0253b5a3cea6b58b98bc9a363dbcff060a1d3",
   "mode": "normal",
   "fontSettings": "default",
+  "themeSourceRevision": "6564a9e21899b5541e9c8f8006f9be6d6d72e6ad",
   "images": [
     {
       "file": "demo.png",
