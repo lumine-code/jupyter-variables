@@ -1,17 +1,76 @@
 {
   "title": "jupyter-variables",
   "description": "Use jupyter-variables with the running Python kernel.",
-  "recordedOn": "2026-10-13",
-  "sourceRevision": "68e0253b5a3cea6b58b98bc9a363dbcff060a1d3",
+  "recordedOn": "2026-10-14",
+  "sourceRevision": "a78fa86e8a5226e0bc3fa95d3ea92f9323691901",
+  "themeSourceRevision": "7fbd047a87ecf1367c896b19ff270cdc28d319f7",
   "mode": "normal",
   "fontSettings": "default",
-  "themeSourceRevision": "6564a9e21899b5541e9c8f8006f9be6d6d72e6ad",
+  "scenario": "demo.js",
+  "recipeHash": "9c00a019a83104cc50b057ff101882510633c1f27b9f46ecbcfb27e0ccf4d893",
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "electron": "44.7.0",
+    "chrome": "152.0.7977.130",
+    "devicePixelRatio": 1,
+    "locale": "en-GB",
+    "fontFamily": "Fira Code, Menlo, DejaVu Sans Mono, Consolas, monospace",
+    "fontSize": 14,
+    "themes": ["one-day-syntax", "one-day-ui"]
+  },
+  "viewport": { "width": 1200, "height": 760 },
+  "cornerRadius": 10,
+  "sources": {
+    "editor": {
+      "revision": "8be8f86075ad93df038610d82b3ac6d99329957d",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "package": {
+      "revision": "a78fa86e8a5226e0bc3fa95d3ea92f9323691901",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "jupyter-variables": {
+      "revision": "a78fa86e8a5226e0bc3fa95d3ea92f9323691901",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "jupyter-cells": {
+      "revision": "2f08b56b04633f28ae26a1fb0786af9e11966edc",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "jupyter-repl": {
+      "revision": "22e65daeb62d6827fdd04cc529d4003cd450ea9f",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "language-python": {
+      "revision": "0ff5b68a22a196804b0ad2451f0c05ff419cf784",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "one-theme": {
+      "revision": "7fbd047a87ecf1367c896b19ff270cdc28d319f7",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "fixtures": [
+    {
+      "file": "jupyter/signal.py",
+      "sha256": "1cca25f8c327f4c05a594c0e3f410378f3869238f601e21f0a9ad58e39f07141"
+    }
+  ],
   "images": [
     {
       "file": "demo.png",
       "label": "Use jupyter-variables with the running Python kernel.",
       "width": 1200,
-      "height": 760
+      "height": 760,
+      "sha256": "0232540e825f12784c5b1d81bca925a8df6dddd620ac347b82044d307472b7a9"
     }
   ]
 }
