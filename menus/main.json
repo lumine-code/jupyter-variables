@@ -4,13 +4,13 @@
       "label": "View",
       "submenu": [
         {
-          "label": "Toggle View",
+          "label": "Jupyter",
           "submenu": [
             {
-              "label": "Jupyter Variables",
+              "label": "Toggle Variables Panel",
               "command": "jupyter-variables:toggle",
-              "group": "panels",
-              "order": 10
+              "group": "toggle",
+              "order": 30
             }
           ]
         }
