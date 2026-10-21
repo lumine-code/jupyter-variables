@@ -104,7 +104,7 @@ class FilterEditor {
 
     this.disposables = new CompositeDisposable(
       registry,
-      this.editor.onDidChange(() => {
+      this.editor.getBuffer().onDidChangeText(() => {
         // Programmatic setText in update() must not echo back into the store:
         // the emit would re-enter the parent's patch that is applying the very
         // change being echoed.
