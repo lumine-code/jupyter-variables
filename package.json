@@ -37,11 +37,13 @@
     "keymaps",
     "lib",
     "menus",
+    "script",
     "spec",
     "styles"
   ],
   "scripts": {
     "test": "lumine --test spec",
+    "test:python-session": "node script/check-python-session.js",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

@@ -432,7 +432,10 @@ const { execFileSync } = require("child_process");
 function findPython() {
   // Live interpreter tests are explicitly enabled in disposable integration CI.
   if (process.env.LUMINE_TEST_LIVE_PYTHON !== "true") return null;
-  for (const candidate of ["python3", "python"]) {
+  const candidates = process.env.LUMINE_TEST_PYTHON
+    ? [process.env.LUMINE_TEST_PYTHON]
+    : ["python3", "python"];
+  for (const candidate of candidates) {
     try {
       const version = execFileSync(candidate, ["--version"], {
         windowsHide: true,

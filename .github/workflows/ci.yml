@@ -43,6 +43,55 @@ jobs:
         run: npm run lint
       - name: Check formatting
         run: npm run format:check
+      - name: Check package contents
+        run: npm pack --dry-run
+
+  python-session:
+    name: Python 3.15.1 namespace session on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      LUMINE_TEST_JUPYTER_REPL: ${{ github.workspace }}/jupyter-repl
+      LUMINE_TEST_TEMP_DIR: ${{ runner.temp }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: jupyter-variables
+      - uses: actions/checkout@v7
+        with:
+          repository: lumine-code/jupyter-repl
+          path: jupyter-repl
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            jupyter-variables/package-lock.json
+            jupyter-repl/package-lock.json
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.15.1"
+      - name: Use HTTPS for GitHub git dependencies
+        run: git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      - name: Install package dependencies
+        working-directory: jupyter-variables
+        run: npm ci --ignore-scripts
+      - name: Install the kernel provider
+        working-directory: jupyter-repl
+        run: npm ci --ignore-scripts
+      - name: Install the full Python notebook stack from wheels
+        run: |
+          python -m pip install --only-binary=:all: "ipykernel==7.4.0" "numpy==2.5.4" "pandas==3.1.0" "pyarrow>=26,<27"
+      - name: Check Python dependency compatibility
+        run: python -m pip check
+      - name: Exercise namespace reads, edits, idle refresh and restart with a real kernel
+        working-directory: jupyter-variables
+        timeout-minutes: 3
+        run: npm run test:python-session
 
   integration:
     # Run the Jasmine spec suite inside a real Lumine build. The specs use the
