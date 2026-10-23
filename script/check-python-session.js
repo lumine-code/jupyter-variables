@@ -30,8 +30,10 @@ const temporaryParent = fs.realpathSync.native(
 const temporaryRoot = fs.mkdtempSync(path.join(temporaryParent, "lumine-variables-ci-"));
 const runtimeDir = path.join(temporaryRoot, "runtime");
 const ipythonDir = path.join(temporaryRoot, "ipython");
+const jupyterConfigDir = path.join(temporaryRoot, "jupyter");
 fs.mkdirSync(runtimeDir);
 fs.mkdirSync(path.join(ipythonDir, "profile_variables"), { recursive: true });
+fs.mkdirSync(jupyterConfigDir);
 process.env.TEMP = temporaryRoot;
 process.env.TMP = temporaryRoot;
 process.env.JUPYTER_RUNTIME_DIR = runtimeDir;
@@ -97,8 +99,12 @@ async function start() {
       () => reject(new Error(`Python kernel startup timed out: ${JSON.stringify(notifications)}`)),
       30000,
     );
-    const environment = { ...process.env, IPYTHONDIR: ipythonDir };
-    delete environment.PYTHONSTARTUP;
+    const environment = {
+      ...process.env,
+      IPYTHONDIR: ipythonDir,
+      JUPYTER_CONFIG_DIR: jupyterConfigDir,
+      PYTHONSTARTUP: "",
+    };
     transport = new ZMQKernel(
       {
         name: "python3",
