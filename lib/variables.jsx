@@ -1,4 +1,5 @@
 /** @jsx etch.dom */
+const InputBudget = require("./input-budget");
 const etch = require("@lumine-code/etch");
 const { CompositeDisposable } = require("lumine");
 const outputRenderer = require("./output-renderer");
@@ -101,6 +102,7 @@ class FilterEditor {
       this.editor.setText(this.props.value);
     }
     this.element.appendChild(this.editor.element);
+    this.budget = new InputBudget(this.editor, this.element, { limit: 4096, label: "Filter" });
 
     this.disposables = new CompositeDisposable(
       registry,
@@ -109,10 +111,14 @@ class FilterEditor {
         // the emit would re-enter the parent's patch that is applying the very
         // change being echoed.
         if (this._settingText) return;
-        this.props.onChange(this.editor.getText());
+        this.budget.validate();
+        this.props.onChange(this.editor.getBuffer().getTextSnapshot());
       }),
       lumine.commands.add(this.editor.element, {
-        "core:confirm": () => this.props.onChange(this.editor.getText()),
+        "core:confirm": () => {
+          if (this.budget.validate())
+            this.props.onChange(this.editor.getBuffer().getTextSnapshot());
+        },
         "core:cancel": () => {
           this.editor.setText("");
           this.props.onChange("");
@@ -127,19 +133,18 @@ class FilterEditor {
 
   update(props) {
     this.props = props;
-    if (this.editor && this.editor.getText() !== props.value) {
-      this._settingText = true;
-      try {
-        this.editor.setText(props.value || "");
-      } finally {
-        this._settingText = false;
-      }
+    this._settingText = true;
+    try {
+      this.budget.sync(props.value);
+    } finally {
+      this._settingText = false;
     }
     return etch.update(this);
   }
 
   destroy() {
     this.disposables.dispose();
+    this.budget?.dispose();
     this.editor?.destroy();
     return etch.destroySync(this);
   }
@@ -300,7 +305,11 @@ class Variables {
       <div className="sidebar variables-panel">
         <div className="variables-controls">
           <div className="filter-container">
-            <FilterEditor value={variableStore.filterText} onChange={this.handleFilterChange} />
+            <FilterEditor
+              ref="filter"
+              value={variableStore.filterSource}
+              onChange={this.handleFilterChange}
+            />
           </div>
           <div className="btn-group">
             <label

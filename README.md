@@ -72,3 +72,5 @@ Paste this into your `styles.css` to fit more names on screen:
 ## Contributing
 
 Got ideas to make this package better, found a bug, or want to help add new features? Just drop your thoughts on GitHub. Any feedback is welcome!
+
+Filter inputs retain their complete draft per kernel. Filters accept at most 4,096 UTF-16 units; larger drafts display an error and leave the last valid filter applied until shortened.
