@@ -17,6 +17,33 @@ function kernel() {
   };
 }
 describe("variables filter input budget", () => {
+  it("keeps the standalone namespace model usable without text editor services", () => {
+    const script = `
+const assert = require("node:assert/strict");
+const Module = require("node:module");
+const api = Module.createRequire(${JSON.stringify(require.resolve("lumine"))})("@lumine-code/event-kit");
+const load = Module._load;
+Module._load = function(name, ...args) { return name === "lumine" ? api : load.call(this, name, ...args); };
+global.lumine = {config:{get:()=>false}};
+const {VariablesStore} = require(${JSON.stringify(require.resolve("../lib/variables-store"))});
+const store = new VariablesStore({onDidChangeGeneration:()=>new api.Disposable()},false);
+assert.equal(store.setFilterText("fram"),true);
+assert.equal(store.filterText,"fram");
+assert.equal(store.setFilterText("x".repeat(4097)),false);
+assert.equal(store.filterText,"fram");
+assert.equal(store.filterSource.length,4097);
+store.destroy();
+`;
+    const result = require("node:child_process").spawnSync(process.execPath, ["-e", script], {
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+      encoding: "utf8",
+      timeout: 15000,
+      windowsHide: true,
+    });
+    expect(result.status)
+      .withContext(result.stderr || result.error?.message)
+      .toBe(0);
+  });
   let session, view;
   beforeEach(() => {
     session = new VariablesSession();
