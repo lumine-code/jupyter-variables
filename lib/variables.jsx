@@ -333,7 +333,7 @@ class Variables {
             </button>
           </div>
         </div>
-        <div className="variable-wrapper">
+        <div className="variable-wrapper" attributes={{ "data-scrollbar": "auto" }}>
           <table className="variable-table">
             <thead>
               <tr className="variable-header">
