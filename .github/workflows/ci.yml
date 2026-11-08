@@ -71,6 +71,12 @@ jobs:
           cache-dependency-path: |
             jupyter-variables/package-lock.json
             jupyter-repl/package-lock.json
+      - name: Check the official Python transport bootstrap
+        working-directory: jupyter-variables
+        run: node --test script/prepare-python.test.js
+      - name: Prepare the exact official Python tool cache
+        working-directory: jupyter-variables
+        run: node script/prepare-python.js
       - uses: actions/setup-python@v7
         with:
           python-version: "3.15.1"
@@ -110,14 +116,20 @@ jobs:
         with:
           repository: lumine-code/lumine
           path: lumine
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.15.1"
       - uses: actions/setup-node@v7
         with:
           node-version-file: lumine/.nvmrc
           cache: npm
           cache-dependency-path: lumine/package-lock.json
+      - name: Check the official Python transport bootstrap
+        working-directory: jupyter-variables
+        run: node --test script/prepare-python.test.js
+      - name: Prepare the exact official Python tool cache
+        working-directory: jupyter-variables
+        run: node script/prepare-python.js
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.15.1"
       - name: Install Linux build and headless-display dependencies
         run: |
           # A third-party repository on the runner image answering 403 must not
@@ -148,7 +160,7 @@ jobs:
         run: npx patch-package
       - name: Download the Electron binary
         working-directory: lumine
-        run: node ./node_modules/electron/install.js
+        run: node script/install-electron.js
       - name: Rebuild native modules for Electron
         working-directory: lumine
         run: npm run build
