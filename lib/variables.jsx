@@ -270,7 +270,7 @@ class Variables {
 
   renderMessage(lines) {
     return (
-      <div className="sidebar variables-panel">
+      <div className="sidebar variables-panel panel-empty-state">
         <background-tips>
           <ul className="centered background-message">{lines}</ul>
         </background-tips>
@@ -360,6 +360,28 @@ class Variables {
               ))}
             </tbody>
           </table>
+          {data.length === 0 ? (
+            <div className="panel-empty-state">
+              <background-tips>
+                <ul className="centered background-message">
+                  <li
+                    className={
+                      !variableStore.refreshing && variableStore.lastRefreshError
+                        ? "text-error"
+                        : ""
+                    }
+                  >
+                    {variableStore.refreshing
+                      ? "Loading variables…"
+                      : variableStore.lastRefreshError ||
+                        (variableStore.filterText
+                          ? "No variables match the filter."
+                          : "No variables to display.")}
+                  </li>
+                </ul>
+              </background-tips>
+            </div>
+          ) : null}
         </div>
       </div>
     );

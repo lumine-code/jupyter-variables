@@ -46,6 +46,8 @@
   }
 
   .variable-wrapper {
+    display: flex;
+    flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
     padding: 0 8px 8px;
@@ -54,6 +56,7 @@
     cursor: default;
 
     .variable-table {
+      flex: none;
       width: 100%;
 
       > thead {

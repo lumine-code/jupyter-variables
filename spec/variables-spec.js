@@ -393,6 +393,30 @@ describe("variables panel", () => {
     await settle();
     expect(component.element.querySelector(".filter-editor lumine-text-editor")).toBeTruthy();
   });
+  it("keeps controls above distinct empty namespace and filter results", async () => {
+    session.setProvider(fakeProvider(fakeKernel()));
+    await settle();
+    render();
+    const store = session.storeFor();
+    store.setVariables([]);
+    flush(component);
+    const message = () => component.element.querySelector(".variable-wrapper .panel-empty-state");
+    expect(message().textContent).toBe("No variables to display.");
+    expect(message().contains(component.element.querySelector(".variables-controls"))).toBeFalse();
+    expect(message().contains(component.element.querySelector("thead"))).toBeFalse();
+
+    store.setVariables(variables("total"));
+    store.setFilterText("missing");
+    flush(component);
+    expect(message().textContent).toBe("No variables match the filter.");
+    store.setFilterText("");
+    flush(component);
+    expect(message()).toBeNull();
+    expect(component.element.querySelector(".variable-name").textContent.trim()).toBe("total");
+    store.setVariables([]);
+    flush(component);
+    expect(message().textContent).toBe("No variables to display.");
+  });
   it("assigns an edit only when the value actually changed", async () => {
     // A repr is rarely valid Python — a summary line never is — so blurring
     // an untouched field must not execute `name = <repr>` in the kernel.
