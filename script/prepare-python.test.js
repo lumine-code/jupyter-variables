@@ -123,6 +123,139 @@ test("a native network failure can use the same verified official asset", async 
   assert.equal(remote.requests.length, 3);
 });
 
+const fixtureToken = "fixture-api-token";
+function redirectTransport(location, signal) {
+  const requests = [];
+  const fetch = async (url, options) => {
+    requests.push({ url, options });
+    if (requests.length === 1) return new Response(null, { status: 504 });
+    if (requests.length === 2)
+      return Response.json({
+        tag_name: RELEASE,
+        assets: [
+          {
+            id: 123,
+            name: asset.filename,
+            browser_download_url: asset.url,
+            digest: `sha256:${asset.sha256}`,
+          },
+        ],
+      });
+    if (requests.length === 3) {
+      signal?.abort();
+      return new Response(null, { status: 302, headers: { Location: location } });
+    }
+    return new Response(bytes);
+  };
+  return { fetch, requests };
+}
+
+for (const host of ["release-assets.githubusercontent.com", "objects.githubusercontent.com"]) {
+  test(`the API credential is stripped before the public ${host} transfer`, async (t) => {
+    const remote = redirectTransport(`https://${host}/official-python.zip?signature=fixture`);
+    await downloadArchive(asset, path.join(fixture(t), "python.zip"), {
+      ...remote,
+      token: fixtureToken,
+    });
+    assert.equal(remote.requests.length, 4);
+    assert.equal(remote.requests[0].options.headers, undefined);
+    for (const request of remote.requests.slice(1, 3)) {
+      assert.equal(new URL(request.url).origin, "https://api.github.com");
+      assert.equal(request.options.headers.Authorization, `Bearer ${fixtureToken}`);
+    }
+    assert.equal(remote.requests[1].options.redirect, "error");
+    assert.equal(remote.requests[2].options.redirect, "manual");
+    assert.equal(remote.requests[3].options.redirect, "error");
+    assert.equal(remote.requests[3].options.headers, undefined);
+  });
+}
+
+test("an authenticated direct API body keeps the credential on the API host only", async (t) => {
+  const remote = transport(new Response(null, { status: 504 }));
+  await downloadArchive(asset, path.join(fixture(t), "python.zip"), {
+    ...remote,
+    token: fixtureToken,
+  });
+  assert.equal(remote.requests.length, 3);
+  assert.equal(remote.requests[0].options.headers, undefined);
+  assert.equal(remote.requests[1].options.headers.Authorization, `Bearer ${fixtureToken}`);
+  assert.equal(remote.requests[2].options.headers.Authorization, `Bearer ${fixtureToken}`);
+});
+
+test("release metadata redirects are forbidden rather than forwarding credentials", async (t) => {
+  const requests = [];
+  await assert.rejects(
+    downloadArchive(asset, path.join(fixture(t), "python.zip"), {
+      token: fixtureToken,
+      fetch: async (url, options) => {
+        requests.push({ url, options });
+        return requests.length === 1
+          ? new Response(null, { status: 504 })
+          : new Response(null, {
+              status: 302,
+              headers: { Location: "https://another.example/metadata" },
+            });
+      },
+    }),
+    /metadata returned HTTP 302/,
+  );
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].options.redirect, "error");
+});
+
+const credentialLocation = new URL("https://release-assets.githubusercontent.com/python.zip");
+credentialLocation.username = "fixture";
+for (const [index, location] of [
+  "https://another.example/python.zip",
+  "http://release-assets.githubusercontent.com/python.zip",
+  "https://release-assets.githubusercontent.com:444/python.zip",
+  "https://objects.githubusercontent.com.another.example/python.zip",
+  "/relative-python.zip",
+  credentialLocation.href,
+].entries()) {
+  test(`untrusted API asset redirect ${index} is rejected without another request`, async (t) => {
+    const remote = redirectTransport(location);
+    await assert.rejects(
+      downloadArchive(asset, path.join(fixture(t), "python.zip"), {
+        ...remote,
+        token: fixtureToken,
+      }),
+      /official Python asset redirect/,
+    );
+    assert.equal(remote.requests.length, 3);
+  });
+}
+
+test("cancellation at the API redirect cannot start a public asset request", async (t) => {
+  const controller = new AbortController();
+  const remote = redirectTransport(
+    "https://release-assets.githubusercontent.com/python.zip",
+    controller,
+  );
+  await assert.rejects(
+    downloadArchive(asset, path.join(fixture(t), "python.zip"), {
+      ...remote,
+      token: fixtureToken,
+      signal: controller.signal,
+    }),
+    { name: "AbortError" },
+  );
+  assert.equal(remote.requests.length, 3);
+});
+
+test("invalid API token input is rejected without printing or sending its value", async (t) => {
+  const remote = transport(new Response(null, { status: 504 }));
+  const invalid = "fixture\nprivate";
+  await assert.rejects(
+    downloadArchive(asset, path.join(fixture(t), "python.zip"), {
+      ...remote,
+      token: invalid,
+    }),
+    (error) => error.message === "Invalid GitHub API token" && !error.message.includes(invalid),
+  );
+  assert.equal(remote.requests.length, 1);
+});
+
 for (const status of [403, 404]) {
   test(`permanent primary HTTP ${status} does not try another transport`, async (t) => {
     const destination = path.join(fixture(t), "python.zip");

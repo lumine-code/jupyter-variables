@@ -76,6 +76,8 @@ jobs:
         run: node --test script/prepare-python.test.js
       - name: Prepare the exact official Python tool cache
         working-directory: jupyter-variables
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: node script/prepare-python.js
       - uses: actions/setup-python@v7
         with:
@@ -126,6 +128,8 @@ jobs:
         run: node --test script/prepare-python.test.js
       - name: Prepare the exact official Python tool cache
         working-directory: jupyter-variables
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: node script/prepare-python.js
       - uses: actions/setup-python@v7
         with:

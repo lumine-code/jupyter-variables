@@ -46,7 +46,24 @@ function selectAsset(platform, arch, osRelease = "") {
   return { filename, sha256, url: `${DOWNLOAD}/${filename}` };
 }
 
-async function downloadArchive(asset, destination, { fetch = globalThis.fetch, signal } = {}) {
+function apiHeaders(accept, token) {
+  if (
+    token &&
+    (typeof token !== "string" ||
+      [...token].some((character) => {
+        const code = character.charCodeAt(0);
+        return code < 33 || code > 126;
+      }))
+  )
+    throw new Error("Invalid GitHub API token");
+  return { Accept: accept, ...(token && { Authorization: `Bearer ${token}` }) };
+}
+
+async function downloadArchive(
+  asset,
+  destination,
+  { fetch = globalThis.fetch, signal, token } = {},
+) {
   signal ??= AbortSignal.timeout(120000);
   let response;
   try {
@@ -59,7 +76,8 @@ async function downloadArchive(asset, destination, { fetch = globalThis.fetch, s
     signal.throwIfAborted();
     await response?.body?.cancel();
     const metadata = await fetch(`${API}/tags/${RELEASE}`, {
-      headers: { Accept: "application/vnd.github+json" },
+      headers: apiHeaders("application/vnd.github+json", token),
+      redirect: "error",
       signal,
     });
     if (!metadata.ok) throw new Error(`Official Python metadata returned HTTP ${metadata.status}`);
@@ -78,9 +96,32 @@ async function downloadArchive(asset, destination, { fetch = globalThis.fetch, s
       throw new Error("The official Python release does not match the pinned archive");
     signal.throwIfAborted();
     response = await fetch(`${API}/assets/${selected.id}`, {
-      headers: { Accept: "application/octet-stream" },
+      headers: apiHeaders("application/octet-stream", token),
+      redirect: "manual",
       signal,
     });
+    if (response.status === 302) {
+      let location;
+      try {
+        location = new URL(response.headers.get("location"));
+      } catch {
+        throw new Error("The official Python asset redirect has no valid location");
+      }
+      if (
+        location.protocol !== "https:" ||
+        location.port ||
+        location.username ||
+        location.password ||
+        !["release-assets.githubusercontent.com", "objects.githubusercontent.com"].includes(
+          location.hostname,
+        )
+      )
+        throw new Error("The official Python asset redirected outside the allowed asset hosts");
+      signal.throwIfAborted();
+      await response.body?.cancel();
+      // The signed public asset request must not receive the API credential.
+      response = await fetch(location.href, { signal, redirect: "error" });
+    }
   }
   if (!response.ok) throw new Error(`Official Python download returned HTTP ${response.status}`);
   if (!response.body) throw new Error("Official Python download has no body");
@@ -186,7 +227,7 @@ async function preparePython({
     const archive = path.join(owned, asset.filename);
     const payload = path.join(owned, "payload");
     fs.mkdirSync(payload);
-    await download(asset, archive, { fetch, signal });
+    await download(asset, archive, { fetch, signal, token: env.GITHUB_TOKEN });
     signal?.throwIfAborted();
     if (platform === "win32") {
       run(
