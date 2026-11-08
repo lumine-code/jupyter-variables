@@ -66,11 +66,16 @@ async function downloadArchive(
 ) {
   signal ??= AbortSignal.timeout(120000);
   let response;
-  try {
-    response = await fetch(asset.url, { signal });
-  } catch (error) {
-    if (signal.aborted || !(error instanceof TypeError && error.message === "fetch failed"))
-      throw error;
+  // Authenticated CI can resolve the same pinned official asset directly.
+  // A stalled browser-download frontend must not consume the whole deadline
+  // before the API route can start. Public tokenless downloads retain it.
+  if (!token) {
+    try {
+      response = await fetch(asset.url, { signal });
+    } catch (error) {
+      if (signal.aborted || !(error instanceof TypeError && error.message === "fetch failed"))
+        throw error;
+    }
   }
   if (!response || [408, 429].includes(response.status) || response.status >= 500) {
     signal.throwIfAborted();

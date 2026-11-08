@@ -37,15 +37,16 @@ const asset = {
   sha256: createHash("sha256").update(bytes).digest("hex"),
 };
 
-function transport(initial, metadata) {
+function transport(initial, metadata, apiFirst = false) {
   const requests = [];
   const fetch = async (url, options) => {
     requests.push({ url, options });
-    if (requests.length === 1) {
+    const phase = requests.length + Number(apiFirst);
+    if (phase === 1) {
       if (initial instanceof Error) throw initial;
       return initial;
     }
-    if (requests.length === 2)
+    if (phase === 2)
       return Response.json(
         metadata ?? {
           tag_name: RELEASE,
@@ -124,12 +125,79 @@ test("a native network failure can use the same verified official asset", async 
 });
 
 const fixtureToken = "fixture-api-token";
+
+test("authenticated downloads never enter the stalled browser route or renew their deadline", async (t) => {
+  const controller = new AbortController();
+  const requests = [];
+  await downloadArchive(asset, path.join(fixture(t), "python.zip"), {
+    token: fixtureToken,
+    signal: controller.signal,
+    fetch: async (url, options) => {
+      assert.notEqual(url, asset.url, "The stalled browser frontend must not be requested");
+      assert.equal(options.signal, controller.signal);
+      requests.push(url);
+      return requests.length === 1
+        ? Response.json({
+            tag_name: RELEASE,
+            assets: [
+              {
+                id: 123,
+                name: asset.filename,
+                browser_download_url: asset.url,
+                digest: `sha256:${asset.sha256}`,
+              },
+            ],
+          })
+        : new Response(bytes);
+    },
+  });
+  assert.deepEqual(requests, [
+    `https://api.github.com/repos/actions/python-versions/releases/tags/${RELEASE}`,
+    "https://api.github.com/repos/actions/python-versions/releases/assets/123",
+  ]);
+});
+
+test("an already cancelled authenticated download cannot start an API or browser request", async (t) => {
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(
+    downloadArchive(asset, path.join(fixture(t), "python.zip"), {
+      token: fixtureToken,
+      signal: controller.signal,
+      fetch() {
+        assert.fail("Caller cancellation must prevent every request");
+      },
+    }),
+    { name: "AbortError" },
+  );
+});
+
+for (const status of [403, 404, 503]) {
+  test(`authenticated API HTTP ${status} fails without browser fallback or a retry`, async (t) => {
+    let requests = 0;
+    await assert.rejects(
+      downloadArchive(asset, path.join(fixture(t), "python.zip"), {
+        token: fixtureToken,
+        fetch: async (url) => {
+          assert.equal(
+            url,
+            `https://api.github.com/repos/actions/python-versions/releases/tags/${RELEASE}`,
+          );
+          requests++;
+          return new Response(null, { status });
+        },
+      }),
+      new RegExp(`metadata returned HTTP ${status}`),
+    );
+    assert.equal(requests, 1);
+  });
+}
+
 function redirectTransport(location, signal) {
   const requests = [];
   const fetch = async (url, options) => {
     requests.push({ url, options });
-    if (requests.length === 1) return new Response(null, { status: 504 });
-    if (requests.length === 2)
+    if (requests.length === 1)
       return Response.json({
         tag_name: RELEASE,
         assets: [
@@ -141,7 +209,7 @@ function redirectTransport(location, signal) {
           },
         ],
       });
-    if (requests.length === 3) {
+    if (requests.length === 2) {
       signal?.abort();
       return new Response(null, { status: 302, headers: { Location: location } });
     }
@@ -157,29 +225,27 @@ for (const host of ["release-assets.githubusercontent.com", "objects.githubuserc
       ...remote,
       token: fixtureToken,
     });
-    assert.equal(remote.requests.length, 4);
-    assert.equal(remote.requests[0].options.headers, undefined);
-    for (const request of remote.requests.slice(1, 3)) {
+    assert.equal(remote.requests.length, 3);
+    for (const request of remote.requests.slice(0, 2)) {
       assert.equal(new URL(request.url).origin, "https://api.github.com");
       assert.equal(request.options.headers.Authorization, `Bearer ${fixtureToken}`);
     }
-    assert.equal(remote.requests[1].options.redirect, "error");
-    assert.equal(remote.requests[2].options.redirect, "manual");
-    assert.equal(remote.requests[3].options.redirect, "error");
-    assert.equal(remote.requests[3].options.headers, undefined);
+    assert.equal(remote.requests[0].options.redirect, "error");
+    assert.equal(remote.requests[1].options.redirect, "manual");
+    assert.equal(remote.requests[2].options.redirect, "error");
+    assert.equal(remote.requests[2].options.headers, undefined);
   });
 }
 
 test("an authenticated direct API body keeps the credential on the API host only", async (t) => {
-  const remote = transport(new Response(null, { status: 504 }));
+  const remote = transport(undefined, undefined, true);
   await downloadArchive(asset, path.join(fixture(t), "python.zip"), {
     ...remote,
     token: fixtureToken,
   });
-  assert.equal(remote.requests.length, 3);
-  assert.equal(remote.requests[0].options.headers, undefined);
+  assert.equal(remote.requests.length, 2);
+  assert.equal(remote.requests[0].options.headers.Authorization, `Bearer ${fixtureToken}`);
   assert.equal(remote.requests[1].options.headers.Authorization, `Bearer ${fixtureToken}`);
-  assert.equal(remote.requests[2].options.headers.Authorization, `Bearer ${fixtureToken}`);
 });
 
 test("release metadata redirects are forbidden rather than forwarding credentials", async (t) => {
@@ -189,18 +255,16 @@ test("release metadata redirects are forbidden rather than forwarding credential
       token: fixtureToken,
       fetch: async (url, options) => {
         requests.push({ url, options });
-        return requests.length === 1
-          ? new Response(null, { status: 504 })
-          : new Response(null, {
-              status: 302,
-              headers: { Location: "https://another.example/metadata" },
-            });
+        return new Response(null, {
+          status: 302,
+          headers: { Location: "https://another.example/metadata" },
+        });
       },
     }),
     /metadata returned HTTP 302/,
   );
-  assert.equal(requests.length, 2);
-  assert.equal(requests[1].options.redirect, "error");
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].options.redirect, "error");
 });
 
 const credentialLocation = new URL("https://release-assets.githubusercontent.com/python.zip");
@@ -222,7 +286,7 @@ for (const [index, location] of [
       }),
       /official Python asset redirect/,
     );
-    assert.equal(remote.requests.length, 3);
+    assert.equal(remote.requests.length, 2);
   });
 }
 
@@ -240,7 +304,7 @@ test("cancellation at the API redirect cannot start a public asset request", asy
     }),
     { name: "AbortError" },
   );
-  assert.equal(remote.requests.length, 3);
+  assert.equal(remote.requests.length, 2);
 });
 
 test("invalid API token input is rejected without printing or sending its value", async (t) => {
@@ -253,7 +317,7 @@ test("invalid API token input is rejected without printing or sending its value"
     }),
     (error) => error.message === "Invalid GitHub API token" && !error.message.includes(invalid),
   );
-  assert.equal(remote.requests.length, 1);
+  assert.equal(remote.requests.length, 0);
 });
 
 for (const status of [403, 404]) {
