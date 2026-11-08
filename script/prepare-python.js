@@ -137,8 +137,11 @@ function cacheReady(target, platform, env, run) {
 }
 
 function removeOwnedStaging(owned, tempRoot) {
+  if (fs.lstatSync(owned).isSymbolicLink())
+    throw new Error("Unsafe Python bootstrap staging cleanup");
   const realOwned = fs.realpathSync(owned);
   if (
+    realOwned !== owned ||
     path.dirname(realOwned) !== tempRoot ||
     !path.basename(realOwned).startsWith(`jupyter-python-${VERSION}-`)
   )
@@ -158,6 +161,9 @@ async function preparePython({
 } = {}) {
   if (env.GITHUB_ACTIONS !== "true")
     throw new Error("The original Python bootstrap may only run on a GitHub Actions runner");
+  // setup-python's HTTP client honors explicit proxy settings. Leave those
+  // installations to it rather than silently taking a direct fetch route.
+  if (env.HTTPS_PROXY || env.https_proxy) return { deferred: true, reason: "https-proxy" };
   const toolCache = env.AGENT_TOOLSDIRECTORY || env.RUNNER_TOOL_CACHE;
   if (
     !toolCache ||
@@ -227,12 +233,17 @@ module.exports = {
   selectAsset,
   downloadArchive,
   cacheReady,
+  removeOwnedStaging,
   preparePython,
 };
 if (require.main === module) {
   preparePython().then(
-    ({ cached }) =>
-      console.log(`Python ${VERSION} official tool cache ${cached ? "already ready" : "prepared"}`),
+    ({ cached, deferred }) =>
+      console.log(
+        deferred
+          ? `Python ${VERSION} transport left to setup-python because an explicit HTTPS proxy is configured`
+          : `Python ${VERSION} official tool cache ${cached ? "already ready" : "prepared"}`,
+      ),
     (error) => {
       console.error(error);
       process.exitCode = 1;

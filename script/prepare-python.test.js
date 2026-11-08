@@ -6,20 +6,25 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { createHash } = require("node:crypto");
+const { spawnSync } = require("node:child_process");
 const {
   VERSION,
   RELEASE,
   CHECKSUMS,
   selectAsset,
   downloadArchive,
+  removeOwnedStaging,
   preparePython,
 } = require("./prepare-python");
 
 function fixture(t) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "jupyter-python-transport-test-"));
+  const tempRoot = fs.realpathSync(os.tmpdir());
+  const root = fs.mkdtempSync(path.join(tempRoot, "jupyter-python-transport-test-"));
   t.after(() => {
+    assert.equal(fs.lstatSync(root).isSymbolicLink(), false);
     const real = fs.realpathSync(root);
-    assert.equal(path.dirname(real), fs.realpathSync(os.tmpdir()));
+    assert.equal(real, root);
+    assert.equal(path.dirname(real), tempRoot);
     assert.ok(path.basename(real).startsWith("jupyter-python-transport-test-"));
     fs.rmSync(real, { recursive: true, force: true });
   });
@@ -210,6 +215,45 @@ test("corrupt archive bytes are rejected before extraction or cache installation
 
 test("the bootstrap refuses to execute the original system installer outside Actions", async () => {
   await assert.rejects(preparePython({ env: {} }), /only run on a GitHub Actions runner/);
+});
+
+for (const variable of ["HTTPS_PROXY", "https_proxy"]) {
+  test(`an explicit ${variable} preserves setup-python's proxy-aware installation responsibility`, async () => {
+    const result = await preparePython({
+      env: { GITHUB_ACTIONS: "true", [variable]: "http://proxy.example:8080" },
+      download() {
+        assert.fail("Proxy installations must not use direct fetch");
+      },
+      run() {
+        assert.fail("The original action must retain proxy installation responsibility");
+      },
+    });
+    assert.deepEqual(result, { deferred: true, reason: "https-proxy" });
+  });
+}
+
+test("a proxy-deferred CLI result is honest about not preparing the cache", () => {
+  const result = spawnSync(process.execPath, [path.join(__dirname, "prepare-python.js")], {
+    env: { ...process.env, GITHUB_ACTIONS: "true", HTTPS_PROXY: "http://proxy.example:8080" },
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /left to setup-python because an explicit HTTPS proxy/);
+  assert.doesNotMatch(result.stdout, /cache (prepared|already ready)/);
+});
+
+test("owned-staging cleanup refuses a symlink without deleting its destination", (t) => {
+  const root = fixture(t);
+  const target = path.join(root, "unrelated-target");
+  const owned = path.join(root, `jupyter-python-${VERSION}-link`);
+  fs.mkdirSync(target);
+  const sentinel = path.join(target, "sentinel");
+  fs.writeFileSync(sentinel, "preserve me");
+  fs.symlinkSync(target, owned, process.platform === "win32" ? "junction" : "dir");
+  assert.throws(() => removeOwnedStaging(owned, root), /Unsafe Python bootstrap staging cleanup/);
+  assert.equal(fs.readFileSync(sentinel, "utf8"), "preserve me");
+  assert.equal(fs.lstatSync(owned).isSymbolicLink(), true);
 });
 
 function runner(t, platform) {
