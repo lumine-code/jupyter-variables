@@ -66,8 +66,8 @@ function transport(initial, metadata, apiFirst = false) {
 }
 
 test("pinned distributions retain the requested release and official checksums", () => {
-  assert.equal(VERSION, "3.15.1");
-  assert.equal(RELEASE, "3.15.1-39619321210");
+  assert.equal(VERSION, "3.15.2");
+  assert.equal(RELEASE, "3.15.2-40340363276");
   assert.equal(Object.keys(CHECKSUMS).length, 11);
   for (const [target, digest] of Object.entries(CHECKSUMS)) {
     assert.match(digest, /^[a-f0-9]{64}$/);

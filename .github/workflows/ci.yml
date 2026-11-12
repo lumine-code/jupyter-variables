@@ -47,7 +47,7 @@ jobs:
         run: npm pack --dry-run
 
   python-session:
-    name: Python 3.15.1 namespace session on ${{ matrix.os }}
+    name: Python 3.15.2 namespace session on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -81,7 +81,7 @@ jobs:
         run: node script/prepare-python.js
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.15.1"
+          python-version: "3.15.2"
       - name: Use HTTPS for GitHub git dependencies
         run: git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
       - name: Install package dependencies
@@ -92,7 +92,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Install the full Python notebook stack from wheels
         run: |
-          python -m pip install --only-binary=:all: "ipykernel==7.4.0" "numpy==2.5.4" "pandas==3.1.0" "pyarrow>=26,<27"
+          python -m pip install --only-binary=:all: "ipykernel==7.4.0" "numpy==2.5.4" "pandas==3.1.1" "pyarrow>=26,<27"
       - name: Check Python dependency compatibility
         run: python -m pip check
       - name: Exercise namespace reads, edits, idle refresh and restart with a real kernel
@@ -133,7 +133,7 @@ jobs:
         run: node script/prepare-python.js
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.15.1"
+          python-version: "3.15.2"
       - name: Install Linux build and headless-display dependencies
         run: |
           # A third-party repository on the runner image answering 403 must not

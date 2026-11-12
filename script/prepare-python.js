@@ -7,24 +7,24 @@ const { createHash } = require("node:crypto");
 const { Readable, Transform } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 
-const VERSION = "3.15.1";
-const RELEASE = "3.15.1-39619321210";
+const VERSION = "3.15.2";
+const RELEASE = "3.15.2-40340363276";
 const API = "https://api.github.com/repos/actions/python-versions/releases";
 const DOWNLOAD = `https://github.com/actions/python-versions/releases/download/${RELEASE}`;
 // The original setup-python distribution, verified against this release's
 // hashes.sha256 and GitHub asset digests. No mirror or rebuilt Python is used.
 const CHECKSUMS = {
-  "darwin-arm64": "e1a49acab28b4a180ee9819663f9e01d0e56ed49f78b1e370dedea8863301a3a",
-  "darwin-x64": "cf2d9c042c9ec5a42e4ae45259faf9dfbbbd21e915ab6b892acaef5312872156",
-  "linux-22.04-arm64": "f4ba4a82780f5d4035de9e86a05f08a8b46a0d4ccbe06a5bb349700ed97e88f7",
-  "linux-22.04-x64": "d5089a4a7ab6cea9664fb26cdae5c6379f880edc368a5be81999455c25cda556",
-  "linux-24.04-arm64": "329908df038ce3d6ab823f84c11a5f6192b660ec93edc33c0ecc33cb832d6310",
-  "linux-24.04-x64": "9809d583ffee9af685f33c8746da541d7102c30a7baa7aacf0a30a1f04731a56",
-  "linux-26.04-arm64": "119ef812a16900b5f4750d2b003766951f09d49b312123be25583db542c63b6e",
-  "linux-26.04-x64": "0aa6f845c6f40c4a88a99e92a46374889ab9170fde378f1168e2e936b34d1218",
-  "win32-arm64": "49b431dbbefc754b761898672f6a89cadff088f89d75b80796ef08872e7e9e55",
-  "win32-x64": "bbe63ab4a501677fe9780242f70a5a66f24fb1e1677134a18eb334da3f58cb87",
-  "win32-x86": "189776c5aa9fa14c8a1b61ae92436dfb187d82a364403c78932276d76a6d058e",
+  "darwin-arm64": "43e924c37f9987e722439ad4cf63b1d90617a96b1655f0999118a33eb7cc2b3e",
+  "darwin-x64": "3598759050401152244152503382874410ef8071fb1156544a3bd233ddcf148f",
+  "linux-22.04-arm64": "cb1ae537f8e9a1d75746efe83612c7280b3c64d7471f1a10028497cd62b329b2",
+  "linux-22.04-x64": "fb97a9a2211b848c4e17481a06948b9bad5bd64eb50707f04f9b682715c2fce4",
+  "linux-24.04-arm64": "ca452e51c1efb21148c09f5766757fd6793555903492b6e363b02786cbdcf9ab",
+  "linux-24.04-x64": "a945ca657bf4efeac7483c0c82381448d3b651a8d0e49be421c71fd53085cd01",
+  "linux-26.04-arm64": "1bd2f706ee858baf0c48c5ecc9b3e47400e3bd366c61270f38e411ed7c346411",
+  "linux-26.04-x64": "2c5bc8461e5c9537914c7b6b2fb212c733f2a6f3e20045763538e5d9ac99f43e",
+  "win32-arm64": "6af13bbb6984d392c8a2d8a37f43b724d28ad530b49743f5de42e13ca76c2726",
+  "win32-x64": "f907cc89f1cdadd15488190b487da6aa59cffe1df23de9670fe014a75204592c",
+  "win32-x86": "5423be781f9e7a0d1775d0d748800e3eb5332c9850e3bd5c7425bd668d73c8c7",
 };
 
 function selectAsset(platform, arch, osRelease = "") {
@@ -265,7 +265,7 @@ async function preparePython({
       },
     );
     if (!cacheReady(target, platform, env, run))
-      throw new Error("The original installer did not produce a complete Python 3.15.1 cache");
+      throw new Error("The original installer did not produce a complete Python 3.15.2 cache");
     return { cached: false, target, asset: asset.filename };
   } finally {
     removeOwnedStaging(owned, tempRoot);
