@@ -257,13 +257,28 @@ class Variables {
       );
     }
 
+    const preview = this.variableStore.preview;
+    const expanded = preview?.name === variable.name;
     return (
       <div
         className="variable-value editable"
         title="Double-click to edit"
         onDoubleClick={() => this.startEditing(variable)}
       >
-        {renderRepr(variable.repr)}
+        {renderRepr(expanded && preview.repr ? preview.repr : variable.repr)}
+        {variable.previewable ? (
+          <button
+            className="btn btn-xs"
+            type="button"
+            attributes={{ "aria-expanded": expanded ? "true" : "false" }}
+            onClick={() => this.variableStore?.previewVariable(variable.name)}
+            onDoubleClick={(event) => event.stopPropagation()}
+          >
+            {expanded ? "Hide preview" : "Preview"}
+          </button>
+        ) : null}
+        {expanded && preview.loading ? <span className="text-subtle">Loading preview…</span> : null}
+        {expanded && preview.error ? <span className="text-error">{preview.error}</span> : null}
       </div>
     );
   }
@@ -360,6 +375,16 @@ class Variables {
               ))}
             </tbody>
           </table>
+          {(variableStore.filteredSnapshot?.truncated ||
+            (variableStore.namespaceTruncated && !variableStore.filteredSnapshot)) &&
+          !variableStore.filtering ? (
+            <p className="text-subtle">
+              Some variables are outside the snapshot limit. Narrow the filter to find them.
+            </p>
+          ) : null}
+          {variableStore.namespaceFilterError ? (
+            <p className="text-error">{variableStore.namespaceFilterError}</p>
+          ) : null}
           {data.length === 0 ? (
             <div className="panel-empty-state">
               <background-tips>
@@ -371,7 +396,7 @@ class Variables {
                         : ""
                     }
                   >
-                    {variableStore.refreshing
+                    {variableStore.refreshing || variableStore.filtering
                       ? "Loading variables…"
                       : variableStore.lastRefreshError ||
                         (variableStore.filterText

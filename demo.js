@@ -1,4 +1,10 @@
 // Authentic package usage. Run with lumine/script/demo.js; fixtures stay in demo/.
+function samplesRow() {
+  return Array.from(document.querySelectorAll(".jupyter-variables .variable-row")).find(
+    (row) => row.querySelector(".variable-name")?.textContent.trim() === "samples",
+  );
+}
+
 module.exports = {
   version: 1,
   dependencies: ["language-python", "jupyter-cells", "jupyter-repl"],
@@ -52,9 +58,11 @@ module.exports = {
           lumine.commands.dispatch(lumine.views.getView(state.editor), "jupyter-variables:toggle");
           lumine.commands.dispatch(lumine.workspace.getElement(), "jupyter-variables:refresh");
         }
+        await waitFor(() => samplesRow()?.querySelector("button"), "samples preview control");
+        samplesRow().querySelector("button").click();
       },
       ready() {
-        return Boolean(document.querySelector(".jupyter-variables")?.innerText.includes("samples"));
+        return Boolean(samplesRow()?.querySelector(".variable-value")?.innerText.includes("-0.4"));
       },
     },
   ],

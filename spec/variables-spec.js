@@ -2,7 +2,7 @@ const { recordRequest, settle } = require("./request-fixture");
 const etch = require("@lumine-code/etch");
 const Variables = require("../lib/variables");
 const VariablesSession = require("../lib/variables-session");
-const { VariablesStore, VARIABLES_CODE } = require("../lib/variables-store");
+const { VariablesStore, VARIABLES_CODE, previewCode } = require("../lib/variables-store");
 const VariablesPane = require("../lib/variables-pane");
 
 // This panel used to read a store hung off jupyter-repl's internal Kernel
@@ -64,6 +64,50 @@ function variables(...names) {
   }));
 }
 describe("variables store", () => {
+  it("retains only the latest requested preview and drops it when the snapshot changes", async () => {
+    const kernel = fakeKernel();
+    kernel.requests = [];
+    const store = new VariablesStore(kernel);
+    store.setVariables(variables("left", "right"));
+    const left = store.previewVariable("left");
+    const right = store.previewVariable("right");
+    expect(kernel.requests[0].disposed).toBeTrue();
+    kernel.requests[1].finish({
+      outputs: [
+        { output_type: "stream", name: "stdout", text: JSON.stringify(variables("right")) },
+      ],
+    });
+    await Promise.all([left, right]);
+    expect(store.preview).toEqual({ name: "right", loading: false, repr: { text: "1" } });
+    store.setVariables(variables("left", "right"));
+    expect(store.preview).toBeNull();
+    store.destroy();
+  });
+
+  it("filters a bounded namespace in the kernel without replacing the MCP cache", async () => {
+    const kernel = fakeKernel();
+    kernel.requests = [];
+    const store = new VariablesStore(kernel);
+    store.setVariables(variables("first"), true);
+    store.setFilterText("later");
+    expect(kernel.requests).toEqual([]);
+    window.advanceClock(150);
+    expect(kernel.requests[0].specification.priority).toBe("background");
+    kernel.requests[0].finish({
+      outputs: [
+        {
+          output_type: "stream",
+          name: "stdout",
+          text: JSON.stringify({ variables: variables("later"), truncated: false }),
+        },
+      ],
+    });
+    await settle();
+    expect(store.filteredVariables).toEqual(variables("later"));
+    expect(store.variables).toEqual(variables("first"));
+    store.destroy();
+  });
+
   it("asks the kernel for its namespace", async () => {
     const kernel = fakeKernel();
     new VariablesStore(kernel).fetchVariables();
@@ -478,19 +522,52 @@ function findPython() {
 const python = findPython();
 const namespaceSuite = python ? describe : () => {};
 namespaceSuite("the namespace dump", () => {
-  it("bounds custom rich representations before sending the namespace", async () => {
+  it("bounds the whole snapshot by row count and encoded size", () => {
+    const harness = `
+import io, json, contextlib
+code = ${JSON.stringify(VARIABLES_CODE)}
+def scan(prefix, value):
+    ns = {"__builtins__": __builtins__, **{f"{prefix}{i}": value for i in range(1200)}}
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output):
+        exec(code, ns)
+    raw = output.getvalue()
+    snapshot = json.loads(raw)
+    return dict(count=len(snapshot["variables"]), size=len(raw.encode("utf-8")), truncated=snapshot["truncated"])
+print(json.dumps([scan("short", 0), scan("x" * 100, "é" * 200)]))
+`;
+    const [rowLimited, sizeLimited] = JSON.parse(
+      execFileSync(python, ["-c", harness], { windowsHide: true, encoding: "utf8", timeout: 5000 }),
+    );
+    expect(rowLimited.count).toBe(1000);
+    expect(rowLimited.truncated).toBeTrue();
+    expect(sizeLimited.count).toBeLessThan(1000);
+    expect(sizeLimited.size).toBeLessThanOrEqual(256 * 1024);
+    expect(sizeLimited.truncated).toBeTrue();
+  });
+
+  it("evaluates a custom rich display only for the selected preview and caps its payload", async () => {
     const harness = `
 import io, json, contextlib
 class BigHTML:
+    calls = 0
     def _repr_html_(self):
+        self.calls += 1
         return "<div>" + "x" * 1000000 + "</div>"
     def __repr__(self):
         return "BigHTML(summary)"
-ns = {"__name__": "__main__", "__builtins__": __builtins__, "value": BigHTML()}
+value = BigHTML()
+ns = {"__name__": "__main__", "__builtins__": __builtins__, "value": value}
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
     exec(${JSON.stringify(VARIABLES_CODE)}, ns)
-print(buf.getvalue())
+summary = json.loads(buf.getvalue())
+calls_before_preview = value.calls
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    exec(${JSON.stringify(previewCode("value"))}, ns)
+print(json.dumps({"summary": summary, "before": calls_before_preview, "after": value.calls,
+                  "preview": json.loads(buf.getvalue())[0]}))
 `;
     const result = JSON.parse(
       execFileSync(python, ["-c", harness], {
@@ -499,8 +576,11 @@ print(buf.getvalue())
         timeout: 30000,
       }),
     );
-    expect(result[0].repr.html).toBeUndefined();
-    expect(result[0].repr.text).toBe("BigHTML(summary)");
+    expect(result.summary.variables[0].repr).toEqual({ text: "<BigHTML>" });
+    expect(result.before).toBe(0);
+    expect(result.after).toBe(1);
+    expect(result.preview.repr.html).toBeUndefined();
+    expect(result.preview.repr.text).toBe("BigHTML(summary)");
   });
   it("reads a namespace without disturbing it", async () => {
     const harness = `
@@ -513,7 +593,7 @@ code = ${JSON.stringify(VARIABLES_CODE)}
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
     exec(code, ns)
-rows = json.loads(buf.getvalue())
+rows = json.loads(buf.getvalue())["variables"]
 print(json.dumps({
     "names": sorted(r["name"] for r in rows),
     "big": next(r for r in rows if r["name"] == "big")["repr"]["text"],

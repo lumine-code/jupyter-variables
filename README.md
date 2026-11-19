@@ -36,7 +36,7 @@ Only Python kernels are supported; the panel says so rather than showing an empt
 
 Auto-refresh is off by default, and the setting decides what each new kernel starts with. It re-reads the namespace every time the kernel falls idle, which costs a round trip after every cell — worth it while you are working through a dataframe, wasteful during a long run. Closing the panel pauses it: nothing is re-read while there is nothing on screen to read it, and reopening picks up where it left off.
 
-Reading the namespace never calls a `_repr_` method on a large value: those materialise the object, which can hang the kernel for no benefit. A dataframe over ten thousand cells, or a string or sized collection over a thousand entries, shows a summary line instead — subclasses included, so a `Counter` is measured like the dict it is. Image representations are read only for small values and only up to 256 KiB, so a figure is never re-encoded on every refresh.
+Refreshing shows lightweight summaries for up to 1,000 variables or 256 KiB. Use the name filter to find variables outside that snapshot. Open **Preview** on a row to compute its rich representation. Large dataframes and collections still show summaries, and image previews are limited to 256 KiB per representation. A fresh snapshot clears the current preview.
 
 The walk leaves the namespace exactly as it found it: its own imports are local to it, and nothing it needs is added to or hidden from what you see.
 
@@ -44,7 +44,7 @@ The walk leaves the namespace exactly as it found it: its own imports are local 
 
 When `lumine-mcp` is connected, `ListJupyterVariables` lists the cached namespace and `GetJupyterVariable` reads a cached name. Both require an explicit `kernelId`, as returned by `ListJupyterKernels`; neither falls back to whichever editor is active. Reading never opens the panel, creates a store, evaluates a representation or sends a kernel request. A kernel whose namespace has not been refreshed reports `cache-unavailable` with an explanation.
 
-`ListJupyterVariables` accepts `offset`, `limit` and `nameContains` independently of the panel's own filter. Both tools accept `maxChars` for each representation, defaulting to 1000; each complete JSON response is bounded to 32 KiB. Text, pretty text, Markdown and HTML are returned as cached strings, with truncation markers. Image payloads are omitted and their available MIME types are listed instead. `nextOffset` continues a list limited by either pagination or the response budget.
+`ListJupyterVariables` accepts `offset`, `limit` and `nameContains` independently of the panel's own filter. Both tools accept `maxChars` for each representation, defaulting to 1,000, and bound the JSON response to 32 KiB. The list contains namespace summaries. `GetJupyterVariable` can also read from the panel's filtered cache and include the current preview for its name. Images contribute their MIME types. `nextOffset` continues a list limited by pagination or the response budget. `namespaceTruncated` reports when the namespace snapshot was bounded.
 
 Snapshots include an ISO `cachedAt`, the observed kernel execution count/time and conservative `stale` state. A known later execution, an active refresh, a busy kernel or a failed refresh marks the cache stale. `stale: false` means no known execution since the snapshot; it does not assert that the kernel was read live. Missing execution metadata leaves staleness unknown (`null`). Provider removal or kernel removal discards the associated cache; package deactivation withdraws the tools.
 

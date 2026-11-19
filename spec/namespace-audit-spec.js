@@ -22,7 +22,7 @@ for runtime in (builtins,builtins.__dict__):
     assert namespace.get('_get_variables') is old, 'existing private user helper was changed'
     assert set(namespace)==before, 'namespace keys were changed'
     assert namespace['__builtins__'] is runtime
-    values=json.loads(output.getvalue())
+    values=json.loads(output.getvalue())['variables']
     assert {'answer','exec'} <= {value['name'] for value in values}
 print('completed owned namespace control')
 `;

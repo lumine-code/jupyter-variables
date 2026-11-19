@@ -189,17 +189,24 @@ _expected_names.add('_expected_names')`,
   const values = Object.fromEntries(store.variables.map((value) => [value.name, value]));
   assert.equal(values.array.type, "ndarray");
   assert.equal(values.array.repr.text, "array(shape=(2, 3), dtype=int64)");
-  assert(values.array.repr.pretty.includes("[0, 1, 2]"));
   assert.equal(values.frame.type, "DataFrame");
-  assert(values.frame.repr.html.includes("zażółć"));
-  assert(values.frame.repr.html.includes("😀"));
   assert.equal(values.arrow_table.type, "Table");
   assert.equal(values.large_frame.repr.text, "DataFrame(11,001 rows × 1 cols)");
-  assert.equal(values.large_frame.repr.html, undefined);
-  assert.equal(values.html.repr.html, "<strong>live namespace</strong>");
-  assert.equal(values.markdown.repr.markdown, "**live markdown**");
+  assert(Object.values(values).every((value) => Object.keys(value.repr).join() === "text"));
+  const preview = async (name) => {
+    await store.previewVariable(name);
+    assert.equal(store.preview.error, undefined);
+    return store.preview.repr;
+  };
+  assert((await preview("array")).pretty.includes("[0, 1, 2]"));
+  const frame = (await preview("frame")).html;
+  assert(frame.includes("zażółć"));
+  assert(frame.includes("😀"));
+  assert.equal((await preview("large_frame")).html, undefined);
+  assert.equal((await preview("html")).html, "<strong>live namespace</strong>");
+  assert.equal((await preview("markdown")).markdown, "**live markdown**");
   assert(
-    Buffer.from(values.image.repr.png, "base64")
+    Buffer.from((await preview("image")).png, "base64")
       .subarray(0, 4)
       .equals(Buffer.from([137, 80, 78, 71])),
   );
